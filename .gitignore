@@ -130,3 +130,8 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+
+/e3-s1-geomatic-parser/tmp/
+/e3-s1-geomatic-parser/dataset/
+/e3-s1-geomatic-parser/node_modules/
+/e3-s1-geomatic-parser/.env
