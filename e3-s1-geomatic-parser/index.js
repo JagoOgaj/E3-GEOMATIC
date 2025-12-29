@@ -9,6 +9,8 @@ import { Pipeline } from "./pipeline/pipeline.js";
 import { OfferRepository } from "./repositories/offerRepository.js";
 import { SireneRepository } from "./repositories/sireneRepository.js";
 import { StopRepository } from "./repositories/stopRepository.js";
+import { SireneInitializer } from "./internal/sireneInitializer.js";
+import { TransportInitializer } from "./internal/transportInitializer.js";
 
 async function main() {
   let db;
@@ -18,6 +20,18 @@ async function main() {
 
     db = new DbPool(conf.getEnvValue("DB_PATH"), 4);
     await db.init();
+
+    // Initialize Sirene data if needed
+    const sireneInitializer = new SireneInitializer(
+      conf.getEnvValue("PATH_SOURCE_SIRENE")
+    );
+    await sireneInitializer.initialize(db);
+
+    // Initialize transport data if needed
+    const transportInitializer = new TransportInitializer(
+      conf.getEnvValue("PATH_SOURCE_STOP_CSV")
+    );
+    await transportInitializer.initialize(db);
 
     const offerRepo = new OfferRepository(
       conf.getEnvValue("PATH_SOURCE_OFFERS_JSON")
