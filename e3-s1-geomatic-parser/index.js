@@ -21,44 +21,41 @@ async function main() {
     db = new DbPool(conf.getEnvValue("DB_PATH"), 4);
     await db.init();
 
-    // Initialize Sirene data if needed
-    const sireneInitializer = new SireneInitializer(
-      conf.getEnvValue("PATH_SOURCE_SIRENE")
-    );
-    await sireneInitializer.initialize(db);
-
-    // Initialize transport data if needed
-    const transportInitializer = new TransportInitializer(
-      conf.getEnvValue("PATH_SOURCE_STOP_CSV")
-    );
-    await transportInitializer.initialize(db);
-
-    const offerRepo = new OfferRepository(
-      conf.getEnvValue("PATH_SOURCE_OFFERS_JSON")
-    );
-    const sireneRepo = new SireneRepository(db);
-    const stopRepo = new StopRepository(db);
-
-    const filePaths = {
+    const env = {
       companies: conf.getEnvValue("PATH_OUTPUT_COMPANIES_GEOJSON"),
       offers: conf.getEnvValue("PATH_OUTPUT_OFFERS_BY_SIRET_JSON"),
       stationsRef: conf.getEnvValue("PATH_OUTPUT_TRANSPORT_STOP_JSON"),
       stationsLink: conf.getEnvValue("PATH_OUTPUT_STOP_BY_SIRET_JSON"),
       requiredDatasets: conf.getEnvValue("PATH_OUTPUT_REQUIRED_DATASETS"),
       gtfsTemp: conf.getEnvValue("PATH_CACHE_GTFS"),
+      stopCsvPathFile: conf.getEnvValue("PATH_SOURCE_STOP_CSV"),
+      sirenePathFile: conf.getEnvValue("PATH_SOURCE_SIRENE"),
+      offersJsonPath: conf.getEnvValue("PATH_SOURCE_OFFERS_JSON"),
     };
 
-    const pipeline = new Pipeline(sireneRepo, offerRepo, stopRepo, filePaths);
+    // Initialize Sirene data if needed
+    const sireneInitializer = new SireneInitializer(env.sirenePathFile);
+    await sireneInitializer.initialize(db);
+
+    // Initialize transport data if needed
+    const transportInitializer = new TransportInitializer(env.stopCsvPathFile);
+    await transportInitializer.initialize(db);
+
+    const offerRepo = new OfferRepository(env.offersJsonPath);
+    const sireneRepo = new SireneRepository(db);
+    const stopRepo = new StopRepository(db);
+
+    const pipeline = new Pipeline(sireneRepo, offerRepo, stopRepo, env);
     await pipeline.run();
 
-    const aggregator = new DatasetAggregator(filePaths);
+    const aggregator = new DatasetAggregator(env);
     await aggregator.run();
 
-    const downloader = new GtfsDownloader(filePaths.gtfsTemp);
-    const manager = new TransportManager(filePaths, downloader);
+    const downloader = new GtfsDownloader(env.gtfsTemp);
+    const manager = new TransportManager(env, downloader);
     const transportCache = await manager.loadTransportData();
 
-    const finalizer = new TransportFinalizer(filePaths);
+    const finalizer = new TransportFinalizer(env);
     await finalizer.run(transportCache);
   } catch (error) {
     console.error(error);
