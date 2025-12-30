@@ -9,8 +9,10 @@ import { Pipeline } from "./pipeline/pipeline.js";
 import { OfferRepository } from "./repositories/offerRepository.js";
 import { SireneRepository } from "./repositories/sireneRepository.js";
 import { StopRepository } from "./repositories/stopRepository.js";
-import { SireneInitializer } from "./internal/sireneInitializer.js";
-import { TransportInitializer } from "./internal/transportInitializer.js";
+import { SireneInitializer } from "./internal/initializer/sireneInitializer.js";
+import { TransportInitializer } from "./internal/initializer/transportInitializer.js";
+import { REGIONS } from "./const/regions.const.js";
+import { OtpBuilder } from "./internal/otp/OtpBuilder.js";
 
 async function main() {
   let db;
@@ -31,6 +33,12 @@ async function main() {
       stopCsvPathFile: conf.getEnvValue("PATH_SOURCE_STOP_CSV"),
       sirenePathFile: conf.getEnvValue("PATH_SOURCE_SIRENE"),
       offersJsonPath: conf.getEnvValue("PATH_SOURCE_OFFERS_JSON"),
+      otp: {
+        baseDir: conf.getEnvValue("BASE_OTP_DIR"),
+        jarPath: conf.getEnvValue("JAR_OTP_PATH"),
+        memory: conf.getEnvValue("OTP_MEMORY"),
+        regions: REGIONS,
+      },
     };
 
     // Initialize Sirene data if needed
@@ -57,6 +65,10 @@ async function main() {
 
     const finalizer = new TransportFinalizer(env);
     await finalizer.run(transportCache);
+
+    const optBuilder = new OtpBuilder(env.otp, db);
+
+    await optBuilder.run();
   } catch (error) {
     console.error(error);
     process.exit(1);

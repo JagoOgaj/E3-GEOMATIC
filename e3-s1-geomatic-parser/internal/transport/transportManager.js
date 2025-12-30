@@ -25,7 +25,7 @@ export class TransportManager {
 
     const CONCURRENCY_LIMIT = 5;
 
-    const processDataset = async (ds, index) => {
+    const processDataset = async (ds, _) => {
       const targetStations = Object.entries(stationsRef)
         .filter(([key, val]) => val.dataset_id === ds.dataset_id)
         .map(([key, val]) => ({

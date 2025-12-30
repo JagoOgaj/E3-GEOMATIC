@@ -36,11 +36,11 @@ export class GtfsParser {
 
     for (const target of this.targets) {
       if (gId.includes(target.id) || target.id.includes(gId)) {
-        return { target, reason: "🆔 ID" };
+        return { target, reason: "ID" };
       }
 
       if (target.name.length > 3 && gName.includes(target.name)) {
-        return { target, reason: "🏷️ NOM" };
+        return { target, reason: "NOM" };
       }
     }
 

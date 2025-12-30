@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import AdmZip from "adm-zip";
+import StreamZip from "node-stream-zip";
 import { pipeline } from "stream/promises";
 import { createWriteStream } from "fs";
 
@@ -28,15 +28,28 @@ export class GtfsDownloader {
 
       await pipeline(response.body, createWriteStream(tempZipPath));
 
-      const zip = new AdmZip(tempZipPath);
-      zip.extractAllTo(targetDir, true);
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
+
+      const zip = new StreamZip.async({ file: tempZipPath });
+
+      await zip.extract(null, targetDir);
+
+      await zip.close();
 
       return targetDir;
     } catch (error) {
-      console.error(error.message);
+      if (fs.existsSync(targetDir)) {
+        fs.rmSync(targetDir, { recursive: true, force: true });
+      }
       return null;
     } finally {
-      if (fs.existsSync(tempZipPath)) fs.unlinkSync(tempZipPath);
+      if (fs.existsSync(tempZipPath)) {
+        try {
+          fs.unlinkSync(tempZipPath);
+        } catch (e) {}
+      }
     }
   }
 }
