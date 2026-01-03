@@ -13,27 +13,31 @@ export class TransportInitializer {
   }
 
   async initialize(db) {
-    // Check if the transport_stops table already exists
-    const tables = await db.query("SELECT table_name FROM information_schema.tables WHERE table_name = 'transport_stops'");
+    const tables = await db.query(
+      "SELECT table_name FROM information_schema.tables WHERE table_name = 'transport_stops'"
+    );
     if (tables.length == 0) {
-      // Check if the CSV exists
       if (!fs.existsSync(this.csvPath)) {
-        console.error(`Transport CSV missing: ${this.csvPath} - can't initialize`);
+        console.error(
+          `Transport CSV missing: ${this.csvPath} - can't initialize`
+        );
         return;
       }
 
       console.log("Creating transport_stops table from CSV...");
-      
-      // 1. Creation of the table (Corrected path)
+
       await db.query(`
         CREATE TABLE transport_stops AS
         SELECT * FROM read_csv_auto('${this.csvPath}', normalize_names=true);
       `);
 
-      // 2. Verification (Should display a number > 0)
       try {
-        const result = await db.query('SELECT count(*) as count FROM transport_stops');
-        console.log(`Total records in transport_stops table: ${result[0].count}`);
+        const result = await db.query(
+          "SELECT count(*) as count FROM transport_stops"
+        );
+        console.log(
+          `Total records in transport_stops table: ${result[0].count}`
+        );
       } catch (e) {
         console.error("Could not retrieve record count for transport_stops");
         return;
@@ -42,14 +46,13 @@ export class TransportInitializer {
       console.log("Transport stops imported successfully.");
     }
 
-    // 3. Creation of the index (Essential for speed)
     try {
-      await db.query('CREATE INDEX IF NOT EXISTS idx_transport_geo ON transport_stops(stop_lat, stop_lon)');
+      await db.query(
+        "CREATE INDEX IF NOT EXISTS idx_transport_geo ON transport_stops(stop_lat, stop_lon)"
+      );
       console.log("Created index: idx_transport_geo");
-    } catch (e) {
-      // Index already exists
-    }
+    } catch (e) {}
 
-    console.log('Transport database initialized successfully!');
+    console.log("Transport database initialized successfully!");
   }
 }

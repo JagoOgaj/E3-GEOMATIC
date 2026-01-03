@@ -10,7 +10,6 @@ export class DatasetAggregator {
   }
 
   async run() {
-
     try {
       const stationsData = JSON.parse(
         await fs.readFile(this.paths.stationsRef, "utf-8")

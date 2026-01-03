@@ -156,7 +156,7 @@ export class GtfsParser {
                 const { target, reason } = result;
 
                 this.#log(
-                  `✅ [MATCH ${reason}] JSON: "${target.id}" <==> GTFS: "${stopId}" (${stopName}) -> ${routeInfo.type} (Ligne: ${routeInfo.name})`
+                  `MATCH ${reason} JSON: "${target.id}" <==> GTFS: "${stopId}" (${stopName}) -> ${routeInfo.type} (Ligne: ${routeInfo.name})`
                 );
                 this.loggedStops.add(stopId);
 

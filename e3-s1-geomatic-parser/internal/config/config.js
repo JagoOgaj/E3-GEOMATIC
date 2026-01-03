@@ -24,9 +24,6 @@ export class Config {
             PATH_OUTPUT_REQUIRED_DATASETS: process.env.PATH_OUTPUT_REQUIRED_DATASETS,
             PATH_CACHE_GTFS: process.env.PATH_CACHE_GTFS,
             PATH_SOURCE_STOP_CSV: process.env.PATH_SOURCE_STOP_CSV,
-            JAR_OTP_PATH: process.env.JAR_OTP_PATH,
-            BASE_OTP_DIR: process.env.BASE_OTP_DIR,
-            OTP_MEMORY: process.env.OTP_MEMORY,
         };
     }
 
