@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import path from 'node:path';
 
 export class Config {
     #env = {};
@@ -12,7 +13,11 @@ export class Config {
     }
 
     #initEnv() {
-        dotenv.config();
+        // Load the .env files if they exist, in a specific order.
+        const defaultsEnvPath = path.resolve(process.cwd(), '.env.defaults'); // This file will be committed and should contain fixed, non-sensitive infos.
+        const envPath = path.resolve(process.cwd(), '.env'); // Sensitive data are supposed to be here. They will override .env.defaults
+        dotenv.config({ path: [defaultsEnvPath, envPath] });
+        
         this.#env = {
             DB_PATH: process.env.DB_PATH,
             PATH_SOURCE_OFFERS_JSON: process.env.PATH_SOURCE_OFFERS_JSON,
