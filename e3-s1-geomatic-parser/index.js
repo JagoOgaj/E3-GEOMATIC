@@ -18,7 +18,7 @@ async function main() {
   try {
     const conf = new Config();
 
-    db = new DbPool(conf.getEnvValue("DB_PATH"), 4);
+    db = new DbPool(conf);
     await db.init();
 
     const env = {
