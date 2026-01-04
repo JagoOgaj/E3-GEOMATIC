@@ -10,7 +10,7 @@ export class DbPool {
     }
 
     if (!fs.existsSync(dbPath)) {
-      throw new Error(`Db not found : ${dbPath}`);
+      console.log(`Db not found, creating one at: ${dbPath}`);
     }
 
     this.dbPath = dbPath;
