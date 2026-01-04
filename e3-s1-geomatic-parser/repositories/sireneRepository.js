@@ -44,8 +44,8 @@ export class SireneRepository {
 
     const sql = `
       SELECT *, 
-             ST_X(ST_GeomFromWKB(geolocetablissement)) as db_lon, 
-             ST_Y(ST_GeomFromWKB(geolocetablissement)) as db_lat 
+             ST_X(geolocetablissement) as db_lon, 
+             ST_Y(geolocetablissement) as db_lat 
       FROM ${this.tableName} 
       WHERE siret IN (${placeholders})
     `;
@@ -151,8 +151,8 @@ export class SireneRepository {
         FROM ${this.tableName} 
         WHERE codepostaletablissement = ?
         AND etatadministratifetablissement = 'A'
-        AND ST_Y(ST_GeomFromWKB(geolocetablissement)) BETWEEN ? AND ?
-        AND ST_X(ST_GeomFromWKB(geolocetablissement)) BETWEEN ? AND ?
+        AND ST_Y(geolocetablissement) BETWEEN ? AND ?
+        AND ST_X(geolocetablissement) BETWEEN ? AND ?
         LIMIT 15
       `;
 
