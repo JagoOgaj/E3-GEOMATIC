@@ -16,10 +16,10 @@ To edit/override the configuration file, you can create an `.env` file next to t
 
 ### Run parser (Linux)
 
-_⚠️ Importing the database seems to require around 10GB of free RAM. The process could ignore `DB_MEMORY_LIMIT`.\
+_:warning: Importing the database seems to require around 10GB of free RAM. The process could ignore `DB_MEMORY_LIMIT`.\
 Please set up memory swapping or close programs if necessary._
 
-_⚠️ The process is intensive and requires 10+ minutes of compute time._
+_:warning: The process is intensive and requires 10+ minutes of compute time._
 
 Once installed, to run the parser, execute the following commands:
 
