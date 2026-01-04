@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "node:fs";
 
 export class TransportInitializer {
   static instance = null;
@@ -39,7 +39,7 @@ export class TransportInitializer {
           `Total records in transport_stops table: ${result[0].count}`
         );
       } catch (e) {
-        console.error("Could not retrieve record count for transport_stops");
+        console.error(`Could not retrieve record count for transport_stops: ${err}`);
         return;
       }
 

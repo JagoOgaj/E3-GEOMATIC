@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "node:fs";
 import Chain from "stream-chain";
 import Parser from "stream-json/Parser.js";
 import StreamArray from "stream-json/streamers/StreamArray.js";

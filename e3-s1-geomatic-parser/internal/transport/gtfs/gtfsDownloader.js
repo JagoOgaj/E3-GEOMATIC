@@ -1,8 +1,7 @@
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import StreamZip from "node-stream-zip";
-import { pipeline } from "stream/promises";
-import { createWriteStream } from "fs";
+import { pipeline } from "node:stream/promises";
 
 export class GtfsDownloader {
   constructor(baseDir) {
@@ -26,7 +25,7 @@ export class GtfsDownloader {
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
 
-      await pipeline(response.body, createWriteStream(tempZipPath));
+      await pipeline(response.body, fs.createWriteStream(tempZipPath));
 
       if (!fs.existsSync(targetDir)) {
         fs.mkdirSync(targetDir, { recursive: true });

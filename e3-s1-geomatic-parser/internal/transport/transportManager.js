@@ -1,5 +1,5 @@
-import fs from "fs/promises";
-import { writeFileSync } from "fs";
+import fs from "node:fs/promises";
+import { writeFileSync } from "node:fs";
 import { GtfsParser } from "./gtfs/gtfsParser.js";
 
 export class TransportManager {
