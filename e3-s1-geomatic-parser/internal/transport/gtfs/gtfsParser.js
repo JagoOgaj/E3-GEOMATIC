@@ -1,5 +1,5 @@
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import csv from "csv-parser";
 
 export class GtfsParser {
@@ -36,11 +36,11 @@ export class GtfsParser {
 
     for (const target of this.targets) {
       if (gId.includes(target.id) || target.id.includes(gId)) {
-        return { target, reason: "🆔 ID" };
+        return { target, reason: "ID" };
       }
 
       if (target.name.length > 3 && gName.includes(target.name)) {
-        return { target, reason: "🏷️ NOM" };
+        return { target, reason: "NOM" };
       }
     }
 
@@ -156,7 +156,7 @@ export class GtfsParser {
                 const { target, reason } = result;
 
                 this.#log(
-                  `✅ [MATCH ${reason}] JSON: "${target.id}" <==> GTFS: "${stopId}" (${stopName}) -> ${routeInfo.type} (Ligne: ${routeInfo.name})`
+                  `MATCH ${reason} JSON: "${target.id}" <==> GTFS: "${stopId}" (${stopName}) -> ${routeInfo.type} (Ligne: ${routeInfo.name})`
                 );
                 this.loggedStops.add(stopId);
 

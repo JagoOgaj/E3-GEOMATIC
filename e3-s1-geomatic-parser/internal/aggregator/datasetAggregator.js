@@ -1,4 +1,4 @@
-import fs from "fs/promises";
+import fs from "node:fs/promises";
 
 export class DatasetAggregator {
   constructor(filePaths) {
@@ -10,7 +10,6 @@ export class DatasetAggregator {
   }
 
   async run() {
-
     try {
       const stationsData = JSON.parse(
         await fs.readFile(this.paths.stationsRef, "utf-8")

@@ -1,6 +1,6 @@
-import fs from "fs/promises";
-import { writeFileSync } from "fs";
-import { GtfsParser } from "./gtfs/GtfsParser.js";
+import fs from "node:fs/promises";
+import { writeFileSync } from "node:fs";
+import { GtfsParser } from "./gtfs/gtfsParser.js";
 
 export class TransportManager {
   constructor(config, downloader) {
@@ -25,7 +25,7 @@ export class TransportManager {
 
     const CONCURRENCY_LIMIT = 5;
 
-    const processDataset = async (ds, index) => {
+    const processDataset = async (ds, _) => {
       const targetStations = Object.entries(stationsRef)
         .filter(([key, val]) => val.dataset_id === ds.dataset_id)
         .map(([key, val]) => ({

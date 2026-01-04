@@ -1,4 +1,4 @@
-import fs from "fs/promises";
+import fs from "node:fs/promises";
 
 export class TransportFinalizer {
   constructor(paths) {
@@ -25,7 +25,7 @@ export class TransportFinalizer {
 
     let updatedStations = 0;
 
-    for (const [siret, data] of Object.entries(linksData)) {
+    for (const [_, data] of Object.entries(linksData)) {
       if (!data.stations || data.stations.length === 0) {
         data._final_score = 0;
         data._summary_modes = [];

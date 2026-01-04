@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "node:fs";
 import pLimit from "p-limit";
 
 export class Pipeline {
@@ -88,8 +88,8 @@ export class Pipeline {
       }_${latKey}_${lonKey}`;
       const hash = Buffer.from(uniqueKey)
         .toString("base64")
-        .replace(/=/g, "")
-        .replace(/\//g, "_");
+        .replaceAll("=", "") // Same: .replace(/=/g, "")
+        .replaceAll("/", "_"); // Same: .replace(/\//g, "_");
       storageId = `VIRTUAL_${hash}`;
       isVirtual = true;
     }

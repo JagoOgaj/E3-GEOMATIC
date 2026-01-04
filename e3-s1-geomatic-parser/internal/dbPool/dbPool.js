@@ -1,20 +1,17 @@
 import duckdb from "duckdb";
-import fs from "fs";
+import fs from "node:fs";
 
 export class DbPool {
   static instance = null;
 
-  constructor(dbPath, poolSize = 4) {
+  constructor(conf) {
     if (DbPool.instance) {
       return DbPool.instance;
     }
 
-    if (!fs.existsSync(dbPath)) {
-      throw new Error(`Db not found : ${dbPath}`);
-    }
-
-    this.dbPath = dbPath;
-    this.poolSize = poolSize;
+    this.conf = conf;
+    this.dbPath = conf.getEnvValue("DB_PATH");
+    this.poolSize = conf.getEnvValue("DB_POOL_SIZE");
     this.db = null;
     this.connections = [];
     this.index = 0;
@@ -23,6 +20,9 @@ export class DbPool {
   }
 
   async init() {
+    if (!fs.existsSync(this.dbPath)) {
+      console.log(`Database not found, creating one at: ${this.dbPath}`);
+    }
     this.db = new duckdb.Database(this.dbPath);
 
     for (let i = 0; i < this.poolSize; i++) {
@@ -31,8 +31,10 @@ export class DbPool {
       await new Promise((resolve, reject) => {
         conn.exec(
           `
-          PRAGMA threads=8;
-          PRAGMA enable_object_cache=true;
+          PRAGMA threads = 8;
+          PRAGMA enable_object_cache = true;
+          PRAGMA memory_limit = '${this.conf.getEnvValue("DB_MEMORY_LIMIT")}';
+          PRAGMA preserve_insertion_order = ${this.conf.getEnvValue("DB_PRESERVE_INSERTION_ORDER")};
           INSTALL spatial;
           LOAD spatial;
           `,

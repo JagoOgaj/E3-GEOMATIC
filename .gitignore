@@ -130,8 +130,40 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# Keep .gitkeep datasets
+/e3-s1-geomatic-parser/dataset/**
+
+# dataset/source/
+!/e3-s1-geomatic-parser/dataset/source/
+/e3-s1-geomatic-parser/dataset/source/**
+!/e3-s1-geomatic-parser/dataset/source/.gitkeep
+
+# dataset/source/entreprises/
+!/e3-s1-geomatic-parser/dataset/source/entreprises/
+/e3-s1-geomatic-parser/dataset/source/entreprises/**
+!/e3-s1-geomatic-parser/dataset/source/entreprises/.gitkeep
+
+# dataset/source/entreprises/offre-alternance/
+!/e3-s1-geomatic-parser/dataset/source/offre-alternance/
+/e3-s1-geomatic-parser/dataset/source/offre-alternance/**
+!/e3-s1-geomatic-parser/dataset/source/offre-alternance/.gitkeep
+
+# dataset/source/entreprises/transport/
+!/e3-s1-geomatic-parser/dataset/source/transport/
+/e3-s1-geomatic-parser/dataset/source/transport/**
+!/e3-s1-geomatic-parser/dataset/source/transport/.gitkeep
+
+# dataset/source/entreprises/transport/arrets-transport/
+!/e3-s1-geomatic-parser/dataset/source/transport/arrets-transport/
+/e3-s1-geomatic-parser/dataset/source/transport/arrets-transport/**
+!/e3-s1-geomatic-parser/dataset/source/transport/arrets-transport/.gitkeep
+
+# dateset/output
+!/e3-s1-geomatic-parser/dataset/output/
+/e3-s1-geomatic-parser/dataset/output/**
+!/e3-s1-geomatic-parser/dataset/output/.gitkeep
 
 /e3-s1-geomatic-parser/tmp/
-/e3-s1-geomatic-parser/dataset/
+/e3-s1-geomatic-parser/jar
 /e3-s1-geomatic-parser/node_modules/
 /e3-s1-geomatic-parser/.env

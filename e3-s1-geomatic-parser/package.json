@@ -10,11 +10,13 @@
   "author": "Rudy LEVET and Samy OKI",
   "license": "Apache-2.0",
   "dependencies": {
+    "@datastructures-js/priority-queue": "^6.3.5",
     "@turf/turf": "^7.3.1",
     "adm-zip": "^0.5.16",
     "csv-parser": "^3.2.0",
     "dotenv": "^17.2.3",
     "duckdb": "^1.4.3",
+    "node-stream-zip": "^1.15.0",
     "p-limit": "^7.2.0",
     "stream-json": "^1.9.1"
   }
