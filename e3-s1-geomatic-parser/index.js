@@ -6,7 +6,7 @@ import { GtfsDownloader } from "./internal/transport/gtfs/gtfsDownloader.js";
 import { SireneInitializer } from "./internal/initializer/sireneInitializer.js";
 import { TransportInitializer } from "./internal/initializer/transportInitializer.js";
 import { TransportFinalizer } from "./internal/transport/transportFinalizer.js";
-import { TransportManager } from "./internal/transport/TransportManager.js";
+import { TransportManager } from "./internal/transport/transportManager.js";
 import { Pipeline } from "./pipeline/pipeline.js";
 import { OfferRepository } from "./repositories/offerRepository.js";
 import { SireneRepository } from "./repositories/sireneRepository.js";

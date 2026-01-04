@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import { writeFileSync } from "fs";
-import { GtfsParser } from "./gtfs/GtfsParser.js";
+import { GtfsParser } from "./gtfs/gtfsParser.js";
 
 export class TransportManager {
   constructor(config, downloader) {

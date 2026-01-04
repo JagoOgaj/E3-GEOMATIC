@@ -1,5 +1,5 @@
 import duckdb from "duckdb";
-import fs from "fs";
+import fs from "node:fs";
 
 export class DbPool {
   static instance = null;
