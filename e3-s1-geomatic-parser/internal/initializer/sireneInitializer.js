@@ -36,38 +36,34 @@ export class SireneInitializer {
     }
 
     const indexes = [
-      "CREATE INDEX idx_sirene_zip ON sirene (codepostaletablissement)",
+      "CREATE INDEX IF NOT EXISTS idx_sirene_zip ON sirene (codepostaletablissement)",
 
-      "CREATE INDEX idx_sirene_siret ON sirene (siret)",
+      "CREATE INDEX IF NOT EXISTS idx_sirene_siret ON sirene (siret)",
 
-      "CREATE INDEX idx_sirene_name ON sirene (denominationunitelegale)",
+      "CREATE INDEX IF NOT EXISTS idx_sirene_name ON sirene (denominationunitelegale)",
 
-      "CREATE INDEX idx_siret ON sirene(siret)",
-      "CREATE INDEX idx_siren ON sirene(siren)",
-      "CREATE INDEX idx_nic ON sirene(nic)",
+      "CREATE INDEX IF NOT EXISTS idx_siret ON sirene(siret)",
+      "CREATE INDEX IF NOT EXISTS idx_siren ON sirene(siren)",
+      "CREATE INDEX IF NOT EXISTS idx_nic ON sirene(nic)",
 
-      "CREATE INDEX idx_denominationusuelle ON sirene(denominationusuelleetablissement)",
-      "CREATE INDEX idx_denominationunitelegale ON sirene(denominationunitelegale)",
+      "CREATE INDEX IF NOT EXISTS idx_denominationusuelle ON sirene(denominationusuelleetablissement)",
+      "CREATE INDEX IF NOT EXISTS idx_denominationunitelegale ON sirene(denominationunitelegale)",
 
-      "CREATE INDEX idx_codepostal ON sirene(codepostaletablissement)",
-      "CREATE INDEX idx_commune ON sirene(libellecommuneetablissement)",
+      "CREATE INDEX IF NOT EXISTS idx_codepostal ON sirene(codepostaletablissement)",
+      "CREATE INDEX IF NOT EXISTS idx_commune ON sirene(libellecommuneetablissement)",
 
-      "CREATE INDEX idx_tranche_effectif ON sirene(trancheeffectifsetablissementtriable)",
+      "CREATE INDEX IF NOT EXISTS idx_tranche_effectif ON sirene(trancheeffectifsetablissementtriable)",
 
-      "CREATE INDEX idx_activite ON sirene(activiteprincipaleetablissement)",
+      "CREATE INDEX IF NOT EXISTS idx_activite ON sirene(activiteprincipaleetablissement)",
 
-      "CREATE INDEX idx_siege ON sirene(etablissementsiege)",
+      "CREATE INDEX IF NOT EXISTS idx_siege ON sirene(etablissementsiege)",
     ];
 
     console.log("Creating indexes...");
     for (const indexQuery of indexes) {
-      const indexName = indexQuery.split(" ")[2];
-      try {
-        await db.query(indexQuery);
-        console.log(`Index created: ${indexName}`);
-      } catch (e) {
-        console.warn(`Failed to create index ${indexName}, perhaps it already exists: ${e.message}`);
-      }
+      const indexName = indexQuery.split(" ")[5];
+      await db.query(indexQuery);
+      console.log(`Index created (or already existing): ${indexName}`);
     }
 
     console.log("Sirene database initialized successfully!");

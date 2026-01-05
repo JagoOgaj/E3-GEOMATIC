@@ -46,12 +46,10 @@ export class TransportInitializer {
       console.log("Transport stops imported successfully.");
     }
 
-    try {
-      await db.query(
-        "CREATE INDEX IF NOT EXISTS idx_transport_geo ON transport_stops(stop_lat, stop_lon)"
-      );
-      console.log("Created index: idx_transport_geo");
-    } catch (e) {}
+    await db.query(
+      "CREATE INDEX IF NOT EXISTS idx_transport_geo ON transport_stops(stop_lat, stop_lon)"
+    );
+    console.log("Index created (or already existing): idx_transport_geo");
 
     console.log("Transport database initialized successfully!");
   }
