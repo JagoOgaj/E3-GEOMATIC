@@ -44,12 +44,18 @@ async function main() {
     const offerRepo = new OfferRepository(env.offersJsonPath);
     const sireneRepo = new SireneRepository(db);
     const stopRepo = new StopRepository(db);
+    
+    console.log("Running pipeline...");
 
     const pipeline = new Pipeline(sireneRepo, offerRepo, stopRepo, env);
     await pipeline.run();
 
+    console.log("Pipeline done, running dataset aggregator...");
+
     const aggregator = new DatasetAggregator(env);
     await aggregator.run();
+
+    console.log("Dataset aggregator done, running transport finalizer...");
 
     const downloader = new GtfsDownloader(env.gtfsTemp);
     const manager = new TransportManager(env, downloader);
@@ -58,6 +64,7 @@ async function main() {
     const finalizer = new TransportFinalizer(env);
     await finalizer.run(transportCache);
 
+    console.log("Transport finalizer done. Finished running Parser.");
   } catch (error) {
     console.error(error);
     process.exit(1);

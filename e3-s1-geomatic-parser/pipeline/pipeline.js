@@ -15,7 +15,7 @@ export class Pipeline {
     this.limit = pLimit(20);
 
     this.buffer = [];
-    this.BUFFER_SIZE = 500;
+    this.BUFFER_SIZE = 100;
 
     this.SEARCH_RADIUS = 2000;
 
