@@ -50,7 +50,7 @@ async function main() {
     const pipeline = new Pipeline(sireneRepo, offerRepo, stopRepo, env);
     await pipeline.run();
 
-    console.log("Pipeline done, running dataset aggregator...");
+    console.log("\nPipeline done, running dataset aggregator...");
 
     const aggregator = new DatasetAggregator(env);
     await aggregator.run();
