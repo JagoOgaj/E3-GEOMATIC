@@ -1,19 +1,32 @@
 import pLimit from "p-limit";
 
+/**
+ * Repository gérant l'accès et la recherche dans la base de données SIRENE (DuckDB).
+ * Responsable de l'enrichissement des offres avec les données d'entreprise officielles.
+ *  
+ * @param {Object} db - Instance de connexion à la base de données.
+ */
 export class SireneRepository {
   tableName = "sirene";
-
+  
   constructor(db) {
     this.db = db;
+    
     this.companyCache = new Map();
+  
     this.searchCache = new Map();
 
     this.dbLimit = pLimit(5);
   }
 
+  /**
+   * Enrichit une liste d'offres avec les données SIRENE.
+   * Procède en deux étapes : récupération en masse des SIRETs connus, puis recherche heuristique pour les manquants.
+   * @param {Array<Object>} offers - Liste des offres à enrichir.
+   * @returns {Promise<Array<Object>>} Liste des offres enrichies.
+   */
   async enrichCompanies(offers) {
     const siretsToFetch = new Set();
-
     for (const offer of offers) {
       if (offer.siret && !this.companyCache.has(offer.siret)) {
         siretsToFetch.add(offer.siret);
@@ -38,10 +51,16 @@ export class SireneRepository {
     return Promise.all(tasks);
   }
 
+  /**
+   * Récupère un lot de SIRETs depuis la base de données.
+   * @param {Array<string>} sirets 
+   * @private
+   */
   async #fetchBatchSirets(sirets) {
     if (sirets.length === 0) return;
+    
     const placeholders = sirets.map(() => "?").join(",");
-
+    
     const sql = `
       SELECT *, 
              ST_X(geolocetablissement) as db_lon, 
@@ -49,17 +68,27 @@ export class SireneRepository {
       FROM ${this.tableName} 
       WHERE siret IN (${placeholders})
     `;
-    const rows = await this.db.query(sql, sirets);
-    rows.forEach((row) => this.companyCache.set(row.siret, row));
+
+    try {
+      const rows = await this.db.query(sql, sirets);
+      rows.forEach((row) => this.companyCache.set(row.siret, row));
+    } catch (err) {
+      console.error("Error batch fetching sirets:", err);
+    }
   }
 
+  /**
+   * Tente de trouver le SIRET d'une offre via son nom et sa localisation.
+   * @param {Object} offer 
+   * @returns {Promise<Object>} L'offre enrichie (ou non).
+   * @private
+   */
   async #findAndEnrichMissingSiret(offer) {
     const zipCode = this.#extractZipCode(offer.workplaceAddress);
+  
     if (!zipCode) return offer;
 
-    const searchKey = `${offer.companyName || "NONAME"}-${zipCode}-${
-      offer.workplaceLat || "NOGEO"
-    }`;
+    const searchKey = `${offer.companyName || "NONAME"}-${zipCode}-${offer.workplaceLat || "NOGEO"}`;
 
     if (this.searchCache.has(searchKey)) {
       const cachedSiret = this.searchCache.get(searchKey);
@@ -70,36 +99,40 @@ export class SireneRepository {
     }
 
     const foundSiret = await this.#cascadeSearch(offer, zipCode);
+    
     this.searchCache.set(searchKey, foundSiret || null);
 
     if (foundSiret) {
       if (!this.companyCache.has(foundSiret)) {
         await this.#fetchBatchSirets([foundSiret]);
       }
+      
       const company = this.companyCache.get(foundSiret);
       if (company) {
         offer.siret = foundSiret;
         return this.#mapToDomain(offer, company);
       }
     }
+    
     return offer;
   }
 
+  /**
+   * Stratégie de recherche en cascade :
+   * 1. Recherche par Nom exact (ou ILIKE) + Code Postal.
+   * 2. Recherche spatiale (Lat/Lon) + Similarité de nom (Levenshtein).
+   * @private
+   */
   async #cascadeSearch(offer, zipCode) {
     const rawName = offer.companyName || "";
-
+    
     const cleanName = rawName
       .replace(/['"-]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
 
     if (cleanName) {
-      const siret = await this.#searchByNameAndGeo(
-        cleanName,
-        zipCode,
-        offer,
-        0.02
-      );
+      const siret = await this.#searchByNameAndGeo(cleanName, zipCode, offer, 0.02);
       if (siret) return siret;
     }
 
@@ -116,11 +149,15 @@ export class SireneRepository {
     return null;
   }
 
+  /**
+   * Recherche SQL hybride (Texte + Géo).
+   * @private
+   */
   async #searchByNameAndGeo(name, zipCode, offer, radius) {
     let sql = `
       SELECT siret FROM ${this.tableName} 
       WHERE codepostaletablissement = ? 
-      AND etatadministratifetablissement = 'A'
+      AND etatadministratifetablissement = 'A' -- Uniquement les entreprises actives
     `;
     const params = [zipCode];
 
@@ -145,6 +182,11 @@ export class SireneRepository {
     }
   }
 
+  /**
+   * Recherche spatiale puis filtrage JS par distance de Levenshtein.
+   * Utile quand le nom est mal orthographié dans l'offre.
+   * @private
+   */
   async #searchByLocationAndSimilarity(offer, zipCode, radius, targetName) {
     const sql = `
         SELECT siret, denominationunitelegale, enseigne1etablissement 
@@ -177,7 +219,7 @@ export class SireneRepository {
 
         const s1 = this.#fastSimilarity(targetName, name1);
         const s2 = this.#fastSimilarity(targetName, name2);
-        const maxS = s1 > s2 ? s1 : s2;
+        const maxS = Math.max(s1, s2);
 
         if (maxS > bestScore) {
           bestScore = maxS;
@@ -194,6 +236,11 @@ export class SireneRepository {
     }
   }
 
+  /**
+   * Calcule la similarité normalized Levenshtein (0 = différent, 1 = identique).
+   * Implémentation itérative optimisée pour limiter l'empreinte mémoire.
+   * @private
+   */
   #fastSimilarity(s1, s2) {
     if (!s1 || !s2) return 0;
     const a = s1.toLowerCase();
@@ -202,12 +249,11 @@ export class SireneRepository {
 
     const lenA = a.length;
     const lenB = b.length;
-    if (lenA === 0) return 0;
-    if (lenB === 0) return 0;
+    if (lenA === 0 || lenB === 0) return 0;
 
     if (lenA > lenB) return this.#fastSimilarity(s2, s1);
 
-    let row = new Int32Array(lenA + 1);
+    const row = new Int32Array(lenA + 1);
     for (let i = 0; i <= lenA; i++) row[i] = i;
 
     for (let i = 1; i <= lenB; i++) {
@@ -229,12 +275,20 @@ export class SireneRepository {
     return 1 - distance / Math.max(lenA, lenB);
   }
 
+  /**
+   * Extrait un code postal français (5 chiffres) d'une chaîne.
+   * @private
+   */
   #extractZipCode(address) {
     if (!address) return null;
     const match = address.match(/\b\d{5}\b/);
     return match ? match[0] : null;
   }
 
+  /**
+   * Mappe les données DB brutes vers le format de domaine de l'application.
+   * @private
+   */
   #mapToDomain(offer, row) {
     const cat = row.categoriejuridiqueunitelegale;
     const isPublic = cat && (cat.startsWith("7") || cat.startsWith("4"));
@@ -253,6 +307,7 @@ export class SireneRepository {
         nafCode: row.activiteprincipaleetablissement,
         label: row.libelleactiviteprincipale,
       },
+  
       workplaceAddress: [
         row.numerovoieetablissement,
         row.typevoieetablissement,
