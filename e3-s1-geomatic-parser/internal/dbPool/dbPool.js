@@ -58,10 +58,12 @@ export class DbPool {
           (err) => {
             if (err)
               return reject(
-                new Error(`Failed to configure connection ${i}: ${err.message}`)
+                new Error(
+                  `Failed to configure connection ${i}: ${err.message}`,
+                ),
               );
             resolve();
-          }
+          },
         );
       });
 

@@ -68,7 +68,7 @@ export class DatasetAggregator {
 
       await fs.writeFile(
         this.paths.outputDatasets,
-        JSON.stringify(results, null, 2)
+        JSON.stringify(results, null, 2),
       );
 
       return results;

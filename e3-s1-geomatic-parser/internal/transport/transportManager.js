@@ -45,7 +45,7 @@ export class TransportManager {
         const candidates = datasetMap.get(datasetId);
         await this.#processOneDataset(datasetId, candidates, stationsRef);
       },
-      CONCURRENCY_LIMIT
+      CONCURRENCY_LIMIT,
     );
 
     console.log("Transport data loading complete.");
@@ -68,28 +68,24 @@ export class TransportManager {
       const folderPath = await this.downloader.download(datasetId, candidates);
 
       if (!folderPath) {
-        this.#appendLog(
-          `SKIP Dataset ${datasetId}`
-        );
+        this.#appendLog(`SKIP Dataset ${datasetId}`);
         return;
       }
 
       this.#appendLog(
-        `\nDATASET ${datasetId} : ${targetStations.length} stations to map`
+        `\nDATASET ${datasetId} : ${targetStations.length} stations to map`,
       );
 
       const parser = new GtfsParser(
         folderPath,
         this.debugLogPath,
-        targetStations
+        targetStations,
       );
       const result = await parser.parse();
 
       this.#updateCache(datasetId, result);
     } catch (err) {
-      this.#appendLog(
-        `CRITICAL ERROR Dataset ${datasetId}: ${err.message}`
-      );
+      this.#appendLog(`CRITICAL ERROR Dataset ${datasetId}: ${err.message}`);
       console.error(`Error on ${datasetId}:`, err.message);
     }
   }
@@ -161,7 +157,7 @@ export class TransportManager {
       const isDuplicate = existing.some(
         (e) =>
           e.resource_id === ds.resource_id &&
-          e.resource_datagouv_id === ds.resource_datagouv_id
+          e.resource_datagouv_id === ds.resource_datagouv_id,
       );
 
       if (!isDuplicate) existing.push(ds);
@@ -201,7 +197,7 @@ export class TransportManager {
     try {
       writeFileSync(
         this.debugLogPath,
-        `=== DEBUG GTFS PROCESSING : ${new Date().toISOString()} ===\n`
+        `=== DEBUG GTFS PROCESSING : ${new Date().toISOString()} ===\n`,
       );
     } catch (e) {
       console.warn("Unable to initialize the GTFS log file");

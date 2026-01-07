@@ -112,7 +112,7 @@ export class Pipeline {
         await this.#handleNewCompanyLocation(
           storageId,
           enrichedOffer,
-          isVirtual
+          isVirtual,
         );
       }
 
@@ -170,7 +170,7 @@ export class Pipeline {
     const nearbyStops = await this.stopRepo.findNearby(
       offer.workplaceLat,
       offer.workplaceLon,
-      this.SEARCH_RADIUS
+      this.SEARCH_RADIUS,
     );
     const bestStops = nearbyStops.slice(0, 10);
 
@@ -263,8 +263,8 @@ export class Pipeline {
         JSON.stringify(
           Object.fromEntries(this.offersMap),
           this.#jsonReplacer,
-          2
-        )
+          2,
+        ),
       ),
       fs.writeFile(
         this.paths.companies,
@@ -274,24 +274,24 @@ export class Pipeline {
             features: Array.from(this.companiesMap.values()),
           },
           this.#jsonReplacer,
-          2
-        )
+          2,
+        ),
       ),
       fs.writeFile(
         this.paths.stationsRef,
         JSON.stringify(
           Object.fromEntries(this.globalStationsMap),
           this.#jsonReplacer,
-          2
-        )
+          2,
+        ),
       ),
       fs.writeFile(
         this.paths.stationsLink,
         JSON.stringify(
           Object.fromEntries(this.stationsBySiret),
           this.#jsonReplacer,
-          2
-        )
+          2,
+        ),
       ),
     ];
 
@@ -309,7 +309,7 @@ export class Pipeline {
       elapsedSeconds > 0 ? Math.round(this.processedCount / elapsedSeconds) : 0;
 
     process.stdout.write(
-      `\rProcessed: ${this.processedCount} offers | Companies: ${this.companiesMap.size} | Speed: ${speed} offers/s `
+      `\rProcessed: ${this.processedCount} offers | Companies: ${this.companiesMap.size} | Speed: ${speed} offers/s `,
     );
   }
 

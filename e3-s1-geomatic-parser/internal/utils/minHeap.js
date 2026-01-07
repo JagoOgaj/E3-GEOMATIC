@@ -58,7 +58,6 @@ export class MinHeap {
 
       if (this.heap[index].f >= this.heap[parentIndex].f) break;
 
-
       this.#swap(index, parentIndex);
       index = parentIndex;
     }

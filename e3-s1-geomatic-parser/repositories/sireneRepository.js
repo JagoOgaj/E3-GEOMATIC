@@ -3,17 +3,17 @@ import pLimit from "p-limit";
 /**
  * Repository gérant l'accès et la recherche dans la base de données SIRENE (DuckDB).
  * Responsable de l'enrichissement des offres avec les données d'entreprise officielles.
- *  
+ *
  * @param {Object} db - Instance de connexion à la base de données.
  */
 export class SireneRepository {
   tableName = "sirene";
-  
+
   constructor(db) {
     this.db = db;
-    
+
     this.companyCache = new Map();
-  
+
     this.searchCache = new Map();
 
     this.dbLimit = pLimit(5);
@@ -53,14 +53,14 @@ export class SireneRepository {
 
   /**
    * Récupère un lot de SIRETs depuis la base de données.
-   * @param {Array<string>} sirets 
+   * @param {Array<string>} sirets
    * @private
    */
   async #fetchBatchSirets(sirets) {
     if (sirets.length === 0) return;
-    
+
     const placeholders = sirets.map(() => "?").join(",");
-    
+
     const sql = `
       SELECT *, 
              ST_X(geolocetablissement) as db_lon, 
@@ -79,13 +79,13 @@ export class SireneRepository {
 
   /**
    * Tente de trouver le SIRET d'une offre via son nom et sa localisation.
-   * @param {Object} offer 
+   * @param {Object} offer
    * @returns {Promise<Object>} L'offre enrichie (ou non).
    * @private
    */
   async #findAndEnrichMissingSiret(offer) {
     const zipCode = this.#extractZipCode(offer.workplaceAddress);
-  
+
     if (!zipCode) return offer;
 
     const searchKey = `${offer.companyName || "NONAME"}-${zipCode}-${offer.workplaceLat || "NOGEO"}`;
@@ -99,21 +99,21 @@ export class SireneRepository {
     }
 
     const foundSiret = await this.#cascadeSearch(offer, zipCode);
-    
+
     this.searchCache.set(searchKey, foundSiret || null);
 
     if (foundSiret) {
       if (!this.companyCache.has(foundSiret)) {
         await this.#fetchBatchSirets([foundSiret]);
       }
-      
+
       const company = this.companyCache.get(foundSiret);
       if (company) {
         offer.siret = foundSiret;
         return this.#mapToDomain(offer, company);
       }
     }
-    
+
     return offer;
   }
 
@@ -125,14 +125,19 @@ export class SireneRepository {
    */
   async #cascadeSearch(offer, zipCode) {
     const rawName = offer.companyName || "";
-    
+
     const cleanName = rawName
       .replace(/['"-]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
 
     if (cleanName) {
-      const siret = await this.#searchByNameAndGeo(cleanName, zipCode, offer, 0.02);
+      const siret = await this.#searchByNameAndGeo(
+        cleanName,
+        zipCode,
+        offer,
+        0.02,
+      );
       if (siret) return siret;
     }
 
@@ -141,7 +146,7 @@ export class SireneRepository {
         offer,
         zipCode,
         0.001,
-        cleanName
+        cleanName,
       );
       if (siret) return siret;
     }
@@ -307,7 +312,7 @@ export class SireneRepository {
         nafCode: row.activiteprincipaleetablissement,
         label: row.libelleactiviteprincipale,
       },
-  
+
       workplaceAddress: [
         row.numerovoieetablissement,
         row.typevoieetablissement,

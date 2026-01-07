@@ -2,17 +2,17 @@
  * Repository gérant l'accès aux arrêts de transport.
  * Utilise une technique de "Spatial Hashing" (Grille en mémoire) pour effectuer
  * des recherches de proximité ultra-rapides sans solliciter la base de données à chaque requête.
- * 
+ *
  * @param {Object} db - Instance de connexion à la base de données (ex: DuckDB/Postgres).
  */
 export class StopRepository {
   constructor(db) {
     this.db = db;
-  
+
     this.grid = new Map();
     this.allStopsLoaded = false;
-    
-    this.GRID_SIZE = 0.01; 
+
+    this.GRID_SIZE = 0.01;
   }
 
   /**
@@ -52,7 +52,9 @@ export class StopRepository {
     }
 
     this.allStopsLoaded = true;
-    console.log(`${rows.length} indexed stops in ${(Date.now() - startTime) / 1000}s.`);
+    console.log(
+      `${rows.length} indexed stops in ${(Date.now() - startTime) / 1000}s.`,
+    );
   }
 
   /**
@@ -91,7 +93,7 @@ export class StopRepository {
               lat,
               lon,
               stop.lat,
-              stop.lon
+              stop.lon,
             );
 
             if (dist <= radiusMeters) {
@@ -107,8 +109,8 @@ export class StopRepository {
 
   /**
    * Génère la clé de hachage spatial pour une coordonnée.
-   * @param {number} lat 
-   * @param {number} lon 
+   * @param {number} lat
+   * @param {number} lon
    * @returns {string} Clé sous forme "LatIdx_LonIdx"
    * @private
    */
@@ -126,16 +128,16 @@ export class StopRepository {
     const R_EARTH = 6371000;
     const dLat = this.#deg2rad(lat2 - lat1);
     const dLon = this.#deg2rad(lon2 - lon1);
-    
+
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(this.#deg2rad(lat1)) *
-      Math.cos(this.#deg2rad(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-      
+        Math.cos(this.#deg2rad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    
+
     return R_EARTH * c;
   }
 

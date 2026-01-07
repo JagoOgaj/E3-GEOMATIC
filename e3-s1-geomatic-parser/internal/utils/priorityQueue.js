@@ -53,7 +53,7 @@ export default class PriorityQueue {
    */
   #bubbleUp(index) {
     const element = this.heap[index];
-    
+
     while (index > 0) {
       const parentIndex = Math.floor((index - 1) / 2);
       const parent = this.heap[parentIndex];
@@ -62,7 +62,7 @@ export default class PriorityQueue {
 
       this.heap[parentIndex] = element;
       this.heap[index] = parent;
-      
+
       index = parentIndex;
     }
   }
@@ -90,8 +90,11 @@ export default class PriorityQueue {
 
       if (rightChildIndex < length) {
         const rightChild = this.heap[rightChildIndex];
-        const currentPriorityToBeat = (swapIndex === null) ? element.priority : this.heap[leftChildIndex].priority;
-        
+        const currentPriorityToBeat =
+          swapIndex === null
+            ? element.priority
+            : this.heap[leftChildIndex].priority;
+
         if (rightChild.priority < currentPriorityToBeat) {
           swapIndex = rightChildIndex;
         }
@@ -101,7 +104,7 @@ export default class PriorityQueue {
 
       this.heap[index] = this.heap[swapIndex];
       this.heap[swapIndex] = element;
-      
+
       index = swapIndex;
     }
   }
