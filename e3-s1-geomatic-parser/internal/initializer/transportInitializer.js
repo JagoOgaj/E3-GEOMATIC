@@ -27,7 +27,7 @@ export class TransportInitializer {
    */
   async initialize(db) {
     const tables = await db.query(
-      "SELECT table_name FROM information_schema.tables WHERE table_name = 'transport_stops'"
+      "SELECT table_name FROM information_schema.tables WHERE table_name = 'transport_stops'",
     );
 
     if (tables.length === 0) {
@@ -45,7 +45,7 @@ export class TransportInitializer {
   async #importData(db) {
     if (!fs.existsSync(this.csvPath)) {
       throw new Error(
-        `Transport CSV file missing at: ${this.csvPath}. Cannot initialize database.`
+        `Transport CSV file missing at: ${this.csvPath}. Cannot initialize database.`,
       );
     }
 
@@ -62,7 +62,7 @@ export class TransportInitializer {
    */
   async #createIndexes(db) {
     await db.query(
-      "CREATE INDEX IF NOT EXISTS idx_transport_geo ON transport_stops(stop_lat, stop_lon)"
+      "CREATE INDEX IF NOT EXISTS idx_transport_geo ON transport_stops(stop_lat, stop_lon)",
     );
   }
 }

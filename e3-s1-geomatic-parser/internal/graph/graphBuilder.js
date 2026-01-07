@@ -62,7 +62,7 @@ export class GraphBuilder {
       } catch (error) {
         console.error(
           `GraphBuilder: Error processing ${datasetName}:`,
-          error.message
+          error.message,
         );
       }
     }
@@ -143,7 +143,7 @@ export class GraphBuilder {
       nodeA.lat,
       nodeA.lon,
       nodeB.lat,
-      nodeB.lon
+      nodeB.lon,
     );
 
     const isRail = route.route_type !== "3";
@@ -157,11 +157,11 @@ export class GraphBuilder {
 
     const transportTypeLabel = this.gtfsParser.getRouteTypeLabel(
       route?.route_type,
-      lineName
+      lineName,
     );
 
     const existingEdge = this.adjacency[nodeA.id].find(
-      (edge) => edge.node === nodeB.id && edge.line === lineName
+      (edge) => edge.node === nodeB.id && edge.line === lineName,
     );
 
     if (!existingEdge) {
@@ -198,7 +198,7 @@ export class GraphBuilder {
         nodeA.lon,
         nodeA.lat,
         Infinity,
-        maxTransferDistKm
+        maxTransferDistKm,
       );
 
       for (const idx of neighborIndices) {
@@ -209,7 +209,7 @@ export class GraphBuilder {
           nodeA.lat,
           nodeA.lon,
           nodeB.lat,
-          nodeB.lon
+          nodeB.lon,
         );
 
         const durationSeconds =

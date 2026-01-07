@@ -25,7 +25,7 @@ import { DATASET_URL } from "./const/graph.const.js";
  * Orchestre le flux de données : DB -> Pipeline -> Aggregation -> Graph.
  */
 async function main() {
-  console.log("🚀 Starting Application...");
+  console.log("Starting Application");
 
   const config = new Config();
   const db = new DbPool(config);
@@ -39,7 +39,7 @@ async function main() {
       new SireneInitializer(paths.sirenePathFile).initialize(db),
       new TransportInitializer(paths.stopCsvPathFile).initialize(db),
     ]);
-    console.timeEnd("⏱Phase 1: DB Initialization");
+    console.timeEnd("Phase 1: DB Initialization");
 
     console.time("Phase 2: Pipeline & Aggregation");
     const repositories = {
@@ -52,12 +52,12 @@ async function main() {
       repositories.sirene,
       repositories.offer,
       repositories.stop,
-      paths
+      paths,
     );
     await pipeline.run();
 
     const aggregator = new DatasetAggregator(paths);
-    await aggregator.run();
+    await aggregator.process();
     console.timeEnd("Phase 2: Pipeline & Aggregation");
 
     console.time("Phase 3: Transport Processing");

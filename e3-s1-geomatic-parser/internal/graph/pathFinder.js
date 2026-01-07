@@ -60,7 +60,7 @@ export class PathFinder {
       lon,
       lat,
       20,
-      0.5
+      0.5,
     );
 
     if (neighborIndices.length === 0) return null;
@@ -126,7 +126,7 @@ export class PathFinder {
       const result = this.#executeAStar(
         startNodeId,
         endNodeId,
-        profile.options
+        profile.options,
       );
       return result ? { profile: profile.name, ...result } : null;
     });
@@ -255,7 +255,7 @@ export class PathFinder {
         node.lat,
         node.lon,
         endNode.lat,
-        endNode.lon
+        endNode.lon,
       ) / 30
     );
   }

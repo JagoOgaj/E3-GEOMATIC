@@ -6,14 +6,13 @@ import csv from "csv-parser";
  * Parseur GTFS polyvalent
  * Mode 1 (Stateful) : Analyse un dataset pour mapper des IDs spécifiques (via targets)
  * Mode 2 (Stateless) : Extrait les données brutes optimisées pour la construction du graphe
- * 
+ *
  * Initialise le parseur avec les chemins et cibles de configuration
  * @param {string|null} datasetPath - Chemin racine du dataset (requis pour le mode Stateful)
  * @param {string|null} logFilePath - Chemin vers le fichier de log pour l'analyse
  * @param {Array<{id: string, name: string}>} targets - Liste des stations cibles à surveiller
  */
 export class GtfsParser {
-
   constructor(datasetPath = null, logFilePath = null, targets = []) {
     this.datasetPath = datasetPath;
     this.logFilePath = logFilePath;
@@ -37,7 +36,7 @@ export class GtfsParser {
   async parse() {
     if (!this.datasetPath) {
       throw new Error(
-        "GtfsParser: Dataset path is required for stateful parsing."
+        "GtfsParser: Dataset path is required for stateful parsing.",
       );
     }
 
@@ -167,7 +166,7 @@ export class GtfsParser {
             if (matchResult) {
               const { target, reason } = matchResult;
               this.#appendLog(
-                `MATCH [${reason}] JSON:${target.id} <-> GTFS:${stopId} (${stopName}) -> ${routeInfo.type} [${routeInfo.name}]`
+                `MATCH [${reason}] JSON:${target.id} <-> GTFS:${stopId} (${stopName}) -> ${routeInfo.type} [${routeInfo.name}]`,
               );
               this.loggedStops.add(stopId);
 

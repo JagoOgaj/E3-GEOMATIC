@@ -26,13 +26,13 @@ export class SireneInitializer {
    */
   async initialize(db) {
     const tables = await db.query(
-      "SELECT table_name FROM information_schema.tables WHERE table_name = 'sirene'"
+      "SELECT table_name FROM information_schema.tables WHERE table_name = 'sirene'",
     );
 
     if (tables.length === 0) {
       if (!fs.existsSync(this.parquetPath)) {
         throw new Error(
-          `Sirene Parquet file missing at: ${this.parquetPath} Cannot initialize database`
+          `Sirene Parquet file missing at: ${this.parquetPath} Cannot initialize database`,
         );
       }
 

@@ -7,7 +7,7 @@ import StreamArray from "stream-json/streamers/StreamArray.js";
  * Repository responsable de la lecture et de la normalisation des offres d'emploi.
  * Utilise une lecture en streaming pour traiter de volumineux fichiers JSON sans surcharger la mémoire.
  * Implémente le pattern Singleton.
- * 
+ *
  *  @param {string} offerFilePath - Chemin vers le fichier JSON des offres.
  */
 export class OfferRepository {
@@ -42,17 +42,19 @@ export class OfferRepository {
       new StreamArray(),
     ]);
 
-
     pipeline.on("data", async ({ value }) => {
       pipeline.pause();
-      
+
       try {
         const offer = this.mapOffer(value);
         if (offer) {
           await onOfferCallback(offer);
         }
       } catch (err) {
-        console.error(`[OfferRepo] Error processing offer ${value?.identifier?.id}:`, err);
+        console.error(
+          `[OfferRepo] Error processing offer ${value?.identifier?.id}:`,
+          err,
+        );
       } finally {
         pipeline.resume();
       }
@@ -62,10 +64,12 @@ export class OfferRepository {
       console.error("[OfferRepo] Stream error:", err);
     });
 
-    return new Promise((resolve) => pipeline.on("end", () => {
-      console.log("[OfferRepo] Finished reading offers.");
-      resolve();
-    }));
+    return new Promise((resolve) =>
+      pipeline.on("end", () => {
+        console.log("[OfferRepo] Finished reading offers.");
+        resolve();
+      }),
+    );
   }
 
   /**
@@ -95,12 +99,12 @@ export class OfferRepository {
     return {
       offerId: data.identifier?.id,
       siret: data.workplace.siret,
-      
+
       companyName: companyName,
       nafCode: nafCode,
       workplaceSize: data.workplace.size,
       workplaceSector: null,
-      isPublic: null,        
+      isPublic: null,
       workplaceAddress: data.workplace.location?.address,
       workplaceLat: workplaceLat,
       workplaceLon: workplaceLon,
@@ -120,7 +124,7 @@ export class OfferRepository {
   /**
    * Tente d'extraire le nom de l'entreprise depuis la description via une Regex.
    * Utile pour les offres anonymisées ou mal formattées.
-   * @param {string} text 
+   * @param {string} text
    * @returns {string|null}
    * @private
    */
@@ -129,7 +133,7 @@ export class OfferRepository {
 
     const regex =
       /(?:enseigne|société|groupe|entreprise|établissement)\s+([A-Z][a-zA-Z0-9éèà]+(?: [A-Z][a-zA-Z0-9éèà]+)?)/i;
-    
+
     const match = text.match(regex);
     return match ? match[1] : null;
   }

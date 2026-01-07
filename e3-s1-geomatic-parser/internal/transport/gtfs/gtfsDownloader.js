@@ -13,6 +13,8 @@ import { ConsoleLock } from "../../utils/consoleLock.js";
  * @param {string} baseDir - Dossier racine où seront stockés les datasets
  */
 export class GtfsDownloader {
+  static #resolvedDatasets = new Set();
+
   constructor(baseDir) {
     this.baseDir = baseDir;
     this.#ensureDir();
@@ -37,6 +39,7 @@ export class GtfsDownloader {
       fs.rmSync(this.baseDir, { recursive: true, force: true });
     }
     this.#ensureDir();
+    GtfsDownloader.#resolvedDatasets.clear();
   }
 
   /**
@@ -53,7 +56,7 @@ export class GtfsDownloader {
       const id = `dataset_${i + 1}`;
 
       try {
-        const path = await this._downloadDirect(url, id);
+        const path = await this.#downloadDirect(url, id);
         downloadedPaths.push(path);
       } catch (err) {
         console.error(`Download failed for ${url}: ${err.message}`);
@@ -63,39 +66,55 @@ export class GtfsDownloader {
   }
 
   /**
-   * Télécharge un fichier ZIP depuis une URL, l'enregistre temporairement,
-   * l'extrait dans un dossier cible, puis nettoie le fichier temporaire
-   * Si le dossier cible existe déjà et n'est pas vide, le téléchargement est ignoré
-   * @param {string} url - L'URL du fichier ZIP
-   * @param {string} datasetId - L'identifiant unique pour nommer le dossier de sortie
-   * @returns {Promise<string>} Le chemin complet vers le dossier extrait
+   * Méthode de convenance pour télécharger une URL unique directement vers un ID de dataset.
+   * Crée le dossier cible s'il n'existe pas.
+   *
+   * @param {string} url - L'URL du fichier ZIP.
+   * @param {string} datasetId - L'identifiant unique pour nommer le dossier de sortie.
+   * @returns {Promise<string>} Le chemin complet vers le dossier extrait.
    * @private
    */
-  async _downloadDirect(url, datasetId) {
+  async #downloadDirect(url, datasetId) {
     const targetDir = path.join(this.baseDir, String(datasetId));
 
-    if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0) {
+    if (this.#isAlreadyDone(datasetId, targetDir)) {
       return targetDir;
     }
 
-    const tempZipPath = path.join(this.baseDir, `temp_${datasetId}.zip`);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    await this.#downloadAndExtract(url, targetDir, datasetId);
+    GtfsDownloader.#resolvedDatasets.add(String(datasetId));
+    return targetDir;
+  }
+
+  /**
+   * Télécharge un fichier ZIP spécifique et l'extrait dans un répertoire cible existant.
+   * Cette méthode est conçue pour être additive : elle ne supprime pas le contenu existant,
+   * permettant ainsi de fusionner plusieurs ZIPs dans le même dossier.
+   *
+   * @param {string} url - L'URL directe du fragment ZIP à télécharger.
+   * @param {string} targetDir - Le chemin du répertoire où extraire les fichiers.
+   * @param {string} tempIdSuffix - Suffixe pour garantir l'unicité du fichier temporaire.
+   * @returns {Promise<void>}
+   * @private
+   */
+  async #downloadAndExtract(url, targetDir, tempIdSuffix) {
+    const tempFileName = `temp_${tempIdSuffix}_${Date.now()}.zip`;
+    const tempZipPath = path.join(this.baseDir, tempFileName);
 
     try {
-      const response = await fetch(url);
+      const response = await fetch(url.trim());
       if (!response.ok)
         throw new Error(`HTTP ${response.status} - ${response.statusText}`);
 
       await pipeline(response.body, fs.createWriteStream(tempZipPath));
 
-      if (!fs.existsSync(targetDir)) {
-        fs.mkdirSync(targetDir, { recursive: true });
-      }
-
       const zip = new StreamZip.async({ file: tempZipPath });
       await zip.extract(null, targetDir);
       await zip.close();
-
-      return targetDir;
     } finally {
       if (fs.existsSync(tempZipPath)) {
         fs.unlinkSync(tempZipPath);
@@ -104,21 +123,26 @@ export class GtfsDownloader {
   }
 
   /**
-   * Tente de télécharger un dataset à partir d'une liste de métadonnées candidates
-   * En cas d'échec ou d'ambiguïté (plusieurs candidats), demande à l'utilisateur
-   * de fournir une URL valide manuellement via la console
-   * @param {string} datasetId - ID du dataset
-   * @param {Array<Object>} candidates - Liste des objets métadonnées possibles
-   * @returns {Promise<string|null>} Le chemin du dossier extrait ou null si ignoré
+   * Tente de télécharger un dataset. Gère automatiquement les cas simples (1 candidat)
+   * et demande une intervention utilisateur en cas de conflit ou d'erreur.
+   * Supporte le téléchargement de multiples fragments (URLs multiples) fusionnés dans le même dossier.
+   *
+   * @param {string} datasetId - ID du dataset.
+   * @param {Array<Object>} candidates - Liste des objets métadonnées possibles.
+   * @returns {Promise<string|null>} Le chemin du dossier final ou null si l'utilisateur a ignoré (skip).
    */
   async download(datasetId, candidates) {
     const targetDir = path.join(this.baseDir, String(datasetId));
 
-    if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0) {
+    if (this.#isAlreadyDone(datasetId, targetDir)) {
       return targetDir;
     }
 
-    let currentUrl = null;
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    let currentUrls = [];
     let errorReason = null;
 
     const firstCandidate = candidates.length > 0 ? candidates[0] : null;
@@ -128,44 +152,92 @@ export class GtfsDownloader {
       errorReason = "Multiple candidates detected for this ID";
     } else if (candidates.length === 1) {
       const meta = candidates[0];
-      currentUrl = meta.resource_datagouv_id
+      const url = meta.resource_datagouv_id
         ? `https://www.data.gouv.fr/fr/datasets/r/${meta.resource_datagouv_id}`
         : `https://transport.data.gouv.fr/resources/${meta.resource_id}/download`;
+      currentUrls = [url];
     } else {
       errorReason = "No candidates found";
     }
 
     while (true) {
-      if (currentUrl && !errorReason) {
+      if (currentUrls.length > 0 && !errorReason) {
         try {
-          return await this._downloadDirect(currentUrl, datasetId);
+          for (const url of currentUrls) {
+            await this.#downloadAndExtract(url, targetDir, datasetId);
+          }
+          GtfsDownloader.#resolvedDatasets.add(String(datasetId));
+          return targetDir;
         } catch (error) {
           if (fs.existsSync(targetDir)) {
             fs.rmSync(targetDir, { recursive: true, force: true });
+            fs.mkdirSync(targetDir, { recursive: true });
           }
           errorReason = error.message;
         }
       }
 
-      const userUrl = await ConsoleLock.getInstance().runExclusive(async () => {
-        return this.#askUserForResolution(dataGouvId, candidates, errorReason);
-      });
+      const userResponse = await ConsoleLock.getInstance().runExclusive(
+        async () => {
+          if (this.#isAlreadyDone(datasetId, targetDir)) {
+            return "skip";
+          }
+          return await this.#askUserForResolution(
+            dataGouvId,
+            candidates,
+            errorReason,
+          );
+        },
+      );
 
-      if (userUrl === "skip") {
-        return null;
+      if (this.#isAlreadyDone(datasetId, targetDir)) {
+        return targetDir;
       }
 
-      currentUrl = userUrl;
+      if (userResponse === "skip") {
+        if (
+          fs.existsSync(targetDir) &&
+          fs.readdirSync(targetDir).length === 0
+        ) {
+          fs.rmdirSync(targetDir);
+        }
+        return null;
+      }
+      currentUrls = userResponse;
       errorReason = null;
     }
   }
 
   /**
-   * Affiche les informations de conflit et invite l'utilisateur à saisir une URL manuelle
-   * @param {string} datasetId - L'ID du dataset problématique
-   * @param {Array<Object>} candidates - Les métadonnées disponibles pour aide à la décision
-   * @param {string} reason - La raison de l'échec précédent
-   * @returns {Promise<string>} L'URL saisie par l'utilisateur ou 'skip'
+   * Vérifie si un dataset a déjà été traité (téléchargé et extrait) avec succès.
+   * Cette méthode agit comme un mécanisme de mise en cache à deux niveaux :
+   * 1. Vérification en mémoire (pour éviter les doublons dans la session active).
+   * 2. Vérification sur le disque (pour ne pas retélécharger des fichiers existants).
+   *
+   * @param {string} datasetId - L'identifiant unique du dataset.
+   * @param {string} targetDir - Le chemin absolu vers le dossier de destination.
+   * @returns {boolean} True si le dataset est déjà prêt, False s'il doit être téléchargé.
+   * @private
+   */
+  #isAlreadyDone(datasetId, targetDir) {
+    if (GtfsDownloader.#resolvedDatasets.has(String(datasetId))) {
+      return true;
+    }
+    if (fs.existsSync(targetDir) && fs.readdirSync(targetDir).length > 0) {
+      GtfsDownloader.#resolvedDatasets.add(String(datasetId));
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Affiche les informations de conflit et invite l'utilisateur à saisir une ou plusieurs URLs manuelles.
+   * Gère le cas où plusieurs fichiers GTFS doivent être fusionnés pour une même zone.
+   *
+   * @param {string} datasetId - L'ID du dataset problématique.
+   * @param {Array<Object>} candidates - Les métadonnées disponibles pour aider à la décision.
+   * @param {string} reason - La raison de l'échec précédent.
+   * @returns {Promise<Array<string>|string>} Un tableau d'URLs valides ou la chaîne 'skip'.
    * @private
    */
   async #askUserForResolution(datasetId, candidates, reason) {
@@ -178,6 +250,7 @@ export class GtfsDownloader {
     console.log(`Dataset ID: ${datasetId}`);
     console.log(`Error: ${reason}`);
     console.log("Available Candidates:");
+    console.log(`url : https://www.data.gouv.fr/datasets/${datasetId}`);
 
     console.table(
       candidates.map((c) => ({
@@ -185,16 +258,26 @@ export class GtfsDownloader {
         res_datagouv: c.resource_datagouv_id,
         res_id: c.resource_id,
         title: c.dataset_custom_title?.substring(0, 40),
-      }))
+      })),
     );
+
+    console.log("To merge multiple files, separate URLs with a comma (,)");
 
     return new Promise((resolve) => {
       const ask = () => {
-        rl.question("Enter direct .zip URL (or type 'skip'): ", (answer) => {
+        rl.question("Enter direct .zip URL(s) (or type 'skip'): ", (answer) => {
           const clean = answer.trim();
           if (clean) {
             rl.close();
-            resolve(clean);
+            if (clean.toLowerCase() === "skip") {
+              resolve("skip");
+            } else {
+              const urls = clean
+                .split(",")
+                .map((u) => u.trim())
+                .filter(Boolean);
+              resolve(urls);
+            }
           } else {
             ask();
           }

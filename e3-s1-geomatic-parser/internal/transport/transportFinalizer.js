@@ -52,7 +52,7 @@ export class TransportFinalizer {
           const transportInfo = this.#findInCache(
             transportCache,
             refStation.dataset_id,
-            stationLink.id
+            stationLink.id,
           );
 
           if (transportInfo) {
@@ -66,7 +66,7 @@ export class TransportFinalizer {
 
         const score = this.#calculateIndividualScore(
           modes,
-          stationLink.distance
+          stationLink.distance,
         );
 
         if (score > bestStationScore) {
@@ -115,10 +115,10 @@ export class TransportFinalizer {
     let baseScore = this.SCORES.BUS;
 
     const hasHeavyRail = modes.some((m) =>
-      ["Train", "Métro", "Metro", "RER"].some((k) => m.includes(k))
+      ["Train", "Métro", "Metro", "RER"].some((k) => m.includes(k)),
     );
     const hasLightRail = modes.some((m) =>
-      ["Tram", "Tramway"].some((k) => m.includes(k))
+      ["Tram", "Tramway"].some((k) => m.includes(k)),
     );
 
     if (hasHeavyRail) {
