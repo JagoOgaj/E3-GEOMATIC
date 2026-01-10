@@ -1,14 +1,15 @@
 import fs from "fs";
 import path from "path";
-import v8 from "v8";
 import KDBush from "kdbush";
 import * as geokdbush from "geokdbush";
 
 /**
  * Construit le graphe de transport multimodal à partir des fichiers GTFS parsés
  * Gère la consolidation des arrêts (Parent Stations), la création des arcs de transport
- * et la génération des correspondances piétonnes
- * * @param {Object} gtfsParser - Instance du parseur GTFS capable de lire les fichiers CSV/JSON
+ * et la génération des correspondances piétonnes.
+ * Sauvegarde le résultat en JSON pour une compatibilité Frontend.
+ *
+ * @param {Object} gtfsParser - Instance du parseur GTFS capable de lire les fichiers CSV/JSON
  * @param {Object} geoCalculator - Instance de l'utilitaire de calcul de distance
  */
 export class GraphBuilder {
@@ -37,9 +38,9 @@ export class GraphBuilder {
 
   /**
    * Point d'entrée principal.
-   * Itère sur tous les dossiers de datasets GTFS, construit le graphe en mémoire et le sauvegarde
-   * * @param {string[]} datasetPaths - Liste des chemins vers les dossiers GTFS décompressés
-   * @param {string} outputPath - Chemin complet du fichier de sortie (.bin)
+   * Itère sur tous les dossiers de datasets GTFS, construit le graphe en mémoire et le sauvegarde en JSON.
+   * @param {string[]} datasetPaths - Liste des chemins vers les dossiers GTFS décompressés
+   * @param {string} outputPath - Chemin complet du fichier de sortie (ex: .../public/graph.json)
    */
   async build(datasetPaths, outputPath) {
     console.log("GraphBuilder: Starting construction");
@@ -132,10 +133,6 @@ export class GraphBuilder {
 
   /**
    * Calcule le poids et crée l'arc entre deux stations physiques
-   * @param {Object} nodeA - Node de départ
-   * @param {Object} nodeB - Node d'arrivée
-   * @param {Object} route - Informations de la ligne
-   * @param {Object} trip - Informations du voyage
    * @private
    */
   #createTransportEdge(nodeA, nodeB, route, trip) {
@@ -177,7 +174,6 @@ export class GraphBuilder {
 
   /**
    * Génère les correspondances à pied entre les stations proches géographiquement
-   * Utilise un index spatial (KDBush) pour la performance
    * @private
    */
   #generateWalkingTransfers() {
@@ -230,8 +226,9 @@ export class GraphBuilder {
   }
 
   /**
-   * Sérialise le graphe complet en format binaire V8 et l'écrit sur le disque
-   * @param {string} outputPath - Chemin de destination
+   * Modifié: Sérialise le graphe complet en JSON et l'écrit sur le disque
+   * Le JSON est standard et lisible par le navigateur via fetch()
+   * @param {string} outputPath - Chemin de destination (doit finir par .json)
    * @private
    */
   #saveGraphToDisk(outputPath) {
@@ -243,10 +240,16 @@ export class GraphBuilder {
       adjacency: this.adjacency,
     };
 
-    const buffer = v8.serialize(graphObject);
-    fs.writeFileSync(outputPath, buffer);
+    // On transforme l'objet JS en chaîne JSON
+    console.log("GraphBuilder: Serializing to JSON...");
+    const jsonString = JSON.stringify(graphObject);
 
-    const sizeMb = (buffer.length / 1024 / 1024).toFixed(2);
+    fs.writeFileSync(outputPath, jsonString, "utf8");
+
+    // Calcul de la taille du fichier généré
+    const stats = fs.statSync(outputPath);
+    const sizeMb = (stats.size / 1024 / 1024).toFixed(2);
+    
     console.log(`GraphBuilder: Graph saved to ${outputPath} (${sizeMb} MB)`);
   }
 }

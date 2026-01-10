@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GeoJob</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"
+    />
+
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="./src/ui/searchComponent/searchComponent.css"
+    />
+    <link
+      rel="stylesheet"
+      href="./src/ui/favoriteComponent/favoriteComponent.css"
+    />
+    <link
+      rel="stylesheet"
+      href="./src/ui/resultsComponent/resultsComponent.css"
+    />
+    <link rel="stylesheet" href="./src/ui/modalComponent/modalComponent.css" />
+    <link
+      rel="stylesheet"
+      href="./src/ui/navigationComponent/navigationComponent.css"
+    />
+    <link
+      rel="stylesheet"
+      href="./src/ui/transportComponent/transportComponent.css"
+    />
+    <link
+      rel="stylesheet"
+      href="./src/ui/routeDetailsComponent/routeDetailsComponent.css"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div id="app-loader">
+      <div class="loader-container">
+        <div class="loader-logo">
+          <i class="fas fa-map-marked-alt"></i>
+        </div>
+        <h2 class="loader-title">GeoJob</h2>
+        <div class="loader-status" id="loader-status">
+          Initialisation du système
+        </div>
+
+        <div class="progress-track">
+          <div class="progress-fill" id="loader-progress"></div>
+        </div>
+
+        <div class="loader-detail" id="loader-detail">Connexion</div>
+      </div>
+    </div>
+    <div id="map"></div>
+    <div id="ui-layer"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,36 @@
+.transport-widget {
+  position: absolute;
+  top: 190px;
+  left: 30px;
+
+  background: #fff;
+  border-radius: 30px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  padding: 10px 15px;
+  cursor: pointer;
+  z-index: 1000;
+  pointer-events: auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.transport-widget:hover {
+  transform: scale(1.05);
+  background: #ffebee;
+  color: #c0392b;
+}
+
+.transport-close-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #2c3e50;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}

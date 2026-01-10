@@ -60,7 +60,7 @@ export class Config {
 
       PATH_CACHE_GTFS: process.env.PATH_CACHE_GTFS,
       PATH_CACHE_GRAPHHOPPER: process.env.PATH_CACHE_GRAPHHOPPER,
-      PATH_OUTPUT_GRAPH_BIN: process.env.PATH_OUTPUT_GRAPH_BIN,
+      PATH_OUTPUT_GRAPH_JSON: process.env.PATH_OUTPUT_GRAPH_JSON,
     };
   }
 

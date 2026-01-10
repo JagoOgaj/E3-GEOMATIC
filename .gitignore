@@ -167,3 +167,5 @@ dist
 /e3-s1-geomatic-parser/jar
 /e3-s1-geomatic-parser/node_modules/
 /e3-s1-geomatic-parser/.env
+
+/e3-s1-geomatic-app/data
