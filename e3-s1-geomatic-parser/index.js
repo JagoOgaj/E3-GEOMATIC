@@ -113,7 +113,7 @@ function resolvePaths(conf) {
     requiredDatasets: conf.get("PATH_OUTPUT_REQUIRED_DATASETS"),
 
     gtfsTemp: conf.get("PATH_CACHE_GTFS"),
-    outputGraphFile: conf.get("PATH_OUTPUT_GRAPH_BIN"),
+    outputGraphFile: conf.get("PATH_OUTPUT_GRAPH_JSON"),
   };
 }
 
