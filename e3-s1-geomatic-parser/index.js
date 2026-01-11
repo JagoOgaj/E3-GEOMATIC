@@ -16,7 +16,7 @@ import { TransportManager } from "./internal/transport/transportManager.js";
 import { TransportFinalizer } from "./internal/transport/transportFinalizer.js";
 import { GraphBuilder } from "./internal/graph/graphBuilder.js";
 import { GeoCalculator } from "./internal/graph/geoCalculator.js";
-import { GtfsParser } from "./internal/transport/gtfs/GtfsParser.js";
+import { GtfsParser } from "./internal/transport/gtfs/gtfsParser.js";
 
 import { DATASET_URL } from "./const/graph.const.js";
 

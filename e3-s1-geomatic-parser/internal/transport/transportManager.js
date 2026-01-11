@@ -1,6 +1,6 @@
-import fsPromises from "fs/promises";
-import { writeFileSync, appendFileSync } from "fs";
-import { GtfsParser } from "./gtfs/GtfsParser.js";
+import fsPromises from "node:fs/promises";
+import { writeFileSync, appendFileSync } from "node:fs";
+import { GtfsParser } from "./gtfs/gtfsParser.js";
 
 /**
  * Gestionnaire principal des données de transport.

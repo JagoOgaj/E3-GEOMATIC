@@ -130,7 +130,7 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# Keep .gitkeep datasets
+# Keep .gitkeep datasets for parser
 /e3-s1-geomatic-parser/dataset/**
 
 # dataset/source/
@@ -163,9 +163,12 @@ dist
 /e3-s1-geomatic-parser/dataset/output/**
 !/e3-s1-geomatic-parser/dataset/output/.gitkeep
 
+# Keep .gitkeep for app
+/e3-s1-geomatic-app/data/**
+!/e3-s1-geomatic-app/data/.gitkeep
+
 /e3-s1-geomatic-parser/tmp/
 /e3-s1-geomatic-parser/jar
 /e3-s1-geomatic-parser/node_modules/
 /e3-s1-geomatic-parser/.env
 
-/e3-s1-geomatic-app/data
