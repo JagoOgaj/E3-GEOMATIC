@@ -93,6 +93,7 @@ export class FavoritesManager {
   /**
    * Notifie tous les abonnés en exécutant leur callback avec la liste à jour.
    * Méthode privée.
+   * @private
    */
   #notifyListeners() {
     this.listeners.forEach((cb) => cb(this.favorites));
@@ -101,6 +102,7 @@ export class FavoritesManager {
   /**
    * Persiste la liste actuelle des favoris dans le LocalStorage.
    * Méthode privée.
+   * @private
    */
   #saveToStorage() {
     localStorage.setItem(this.storageKey, JSON.stringify(this.favorites));
@@ -111,6 +113,7 @@ export class FavoritesManager {
    * Gère silencieusement les erreurs de parsing.
    * Méthode privée.
    * @returns {Array<Object>} La liste des favoris chargée ou un tableau vide en cas d'erreur.
+   * @private
    */
   #loadFromStorage() {
     try {

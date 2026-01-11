@@ -110,9 +110,10 @@ export class ModalComponent {
       .querySelector(".btn-close")
       .addEventListener("click", () => this.hide());
 
-    this._renderDetailBody(offer, stations);
-    this._setupFooterEvents();
-    this._updateFavoriteBtnState();
+    this.#renderDetailBody(offer, stations);
+
+    this.#setupFooterEvents();
+    this.#updateFavoriteBtnState();
     this.show();
   }
 
@@ -122,8 +123,9 @@ export class ModalComponent {
    * @param {Object} offer - L'offre à afficher.
    * @param {Array<Object>} stations - Les stations de transport.
    * @returns {void}
+   * @private
    */
-  _renderDetailBody(offer, stations) {
+  #renderDetailBody(offer, stations) {
     const body = this.container.querySelector("#modal-dynamic-body");
 
     let contractText = Array.isArray(offer.contractType)
@@ -332,8 +334,9 @@ export class ModalComponent {
    * Méthode privée. Configure les événements des boutons du footer de la modale détail
    * (Calcul d'itinéraire, Ajout/Retrait favori).
    * @returns {void}
+   * @private
    */
-  _setupFooterEvents() {
+  #setupFooterEvents() {
     const routeBtn = this.container.querySelector(".btn-route");
     if (routeBtn) {
       const newBtn = routeBtn.cloneNode(true);
@@ -355,7 +358,7 @@ export class ModalComponent {
         } else {
           this.favManager.addFavorite(this.currentOffer);
         }
-        this._updateFavoriteBtnState();
+        this.#updateFavoriteBtnState();
       });
     }
   }
@@ -364,8 +367,9 @@ export class ModalComponent {
    * Méthode privée. Met à jour l'apparence du bouton favori (cœur plein/vide, texte)
    * en fonction de l'état de l'offre courante dans le FavoritesManager.
    * @returns {void}
+   * @private
    */
-  _updateFavoriteBtnState() {
+  #updateFavoriteBtnState() {
     const btn = this.container.querySelector("#footer-fav-btn");
     if (!btn || !this.currentOffer) return;
     const icon = btn.querySelector("i");

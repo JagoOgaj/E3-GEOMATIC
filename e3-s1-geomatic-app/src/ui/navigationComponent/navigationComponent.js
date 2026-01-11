@@ -44,6 +44,7 @@ export class NavigationComponent {
    * Méthode privée. Configure les écouteurs d'événements sur les boutons du widget.
    * Définit le déplacement (pan) de la carte pour les flèches et le recentrage pour le bouton central.
    * @returns {void}
+   * @private
    */
   #setupEvents() {
     const PAN_OFFSET = 150;

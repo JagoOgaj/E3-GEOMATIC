@@ -47,6 +47,7 @@ export class MinHeap {
    * Méthode privée. Fait remonter le dernier élément ajouté vers sa position correcte
    * en l'échangeant avec son parent tant que son coût 'f' est inférieur.
    * @returns {void}
+   * @private
    */
   #bubbleUp() {
     let index = this.heap.length - 1;
@@ -65,6 +66,7 @@ export class MinHeap {
    * Méthode privée. Fait redescendre la nouvelle racine vers sa position correcte
    * en l'échangeant avec le plus petit de ses enfants tant que l'ordre n'est pas rétabli.
    * @returns {void}
+   * @private
    */
   #bubbleDown() {
     let index = 0;

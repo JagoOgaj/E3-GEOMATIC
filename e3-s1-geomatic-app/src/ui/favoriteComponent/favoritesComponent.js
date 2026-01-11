@@ -58,6 +58,7 @@ export class FavoritesComponent {
    * Méthode privée. Configure les écouteurs d'événements pour l'ouverture/fermeture du widget
    * au clic sur le header ou le bouton de fermeture.
    * @returns {void}
+   * @private
    */
   #setupEvents() {
     const header = this.element.querySelector(".fav-header");
@@ -110,6 +111,7 @@ export class FavoritesComponent {
    * sur chaque élément de la liste (suppression, lien externe, clic détail).
    * @param {Array<Object>|null} newList - Nouvelle liste de favoris (optionnel).
    * @returns {void}
+   * @private
    */
   #renderList(newList = null) {
     if (newList) {

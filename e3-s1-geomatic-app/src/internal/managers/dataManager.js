@@ -40,8 +40,9 @@ export class DataManager {
    * Méthode interne. Vérifie si le cache des offres est chargé.
    * Si ce n'est pas le cas, télécharge le fichier JSON contenant toutes les offres.
    * * @returns {Promise<void>}
+   * @private
    */
-  async _ensureOffersLoaded() {
+  async #ensureOffersLoaded() {
     if (!this.offersCache) {
       try {
         const res = await fetch(CONFIG.paths.offers);
@@ -59,7 +60,7 @@ export class DataManager {
    * @returns {Promise<Array<Object>>} Une liste d'objets représentant les offres.
    */
   async getOffersByStorageId(storageId) {
-    await this._ensureOffersLoaded();
+    await this.#ensureOffersLoaded();
     return this.offersCache[storageId] || [];
   }
 
@@ -70,7 +71,7 @@ export class DataManager {
    * @returns {Promise<Object|null>} L'objet offre complet ou null si non trouvé.
    */
   async findOfferById(targetId) {
-    await this._ensureOffersLoaded();
+    await this.#ensureOffersLoaded();
 
     for (const key in this.offersCache) {
       const offers = this.offersCache[key];
@@ -84,8 +85,9 @@ export class DataManager {
    * Méthode interne. Charge en parallèle les fichiers de mapping des stations et les détails des stations.
    * Ne fait rien si les données sont déjà en cache.
    * * @returns {Promise<void>}
+   * @private
    */
-  async _ensureStationsLoaded() {
+  async #ensureStationsLoaded() {
     if (this.stationsMappingCache && this.stationsDetailsCache) return;
 
     try {
@@ -109,7 +111,7 @@ export class DataManager {
    * @returns {Promise<Array<Object>>} Une liste triée d'objets stations enrichis.
    */
   async getStationsForCompany(storageId) {
-    await this._ensureStationsLoaded();
+    await this.#ensureStationsLoaded();
 
     const mappingData = this.stationsMappingCache[storageId];
     if (!mappingData || !mappingData.stations) {
@@ -143,8 +145,9 @@ export class DataManager {
    * Gère les différents formats de données (objet avec section, label, ou string simple).
    * * @param {Object} props - Les propriétés d'une feature GeoJSON.
    * @returns {string} Le nom normalisé du secteur.
+   * @private
    */
-  _getSectorName(props) {
+  #getSectorName(props) {
     if (!props.sector) return "Non renseigné";
     if (props.sector.section) return props.sector.section;
     if (props.sector.label) return props.sector.label;
@@ -165,7 +168,7 @@ export class DataManager {
 
     this.companiesGeoJson.features.forEach((feature) => {
       const p = feature.properties;
-      const sectorName = this._getSectorName(p);
+      const sectorName = this.#getSectorName(p);
       sectorsSet.add(sectorName);
 
       if (p.size) {
@@ -185,8 +188,9 @@ export class DataManager {
    * * @param {Object} userPos - Position de l'utilisateur { lat, lng }.
    * @param {Array<number>} targetCoords - Coordonnées cibles [lng, lat] (Format GeoJSON).
    * @returns {number} La distance en kilomètres.
+   * @private
    */
-  _calculateDistance(userPos, targetCoords) {
+  #calculateDistance(userPos, targetCoords) {
     if (!userPos) return 0;
     const R = 6371;
     const dLat = ((targetCoords[1] - userPos.lat) * Math.PI) / 180;
@@ -207,8 +211,9 @@ export class DataManager {
    * * @param {string} a - Première chaîne.
    * @param {string} b - Deuxième chaîne.
    * @returns {number} Le nombre de modifications nécessaires pour transformer a en b.
+   * @private
    */
-  _levenshteinDistance(a, b) {
+  #levenshteinDistance(a, b) {
     if (a.length === 0) return b.length;
     if (b.length === 0) return a.length;
 
@@ -238,8 +243,9 @@ export class DataManager {
    * * @param {string} source - Le texte dans lequel on cherche (ex: nom de l'entreprise).
    * @param {string} target - Le mot-clé recherché.
    * @returns {boolean} True si correspondance trouvée, False sinon.
+   * @private
    */
-  _fuzzyMatch(source, target) {
+  #fuzzyMatch(source, target) {
     if (!target) return true;
     if (!source) return false;
 
@@ -249,7 +255,7 @@ export class DataManager {
     if (s.includes(t)) return true;
 
     if (t.length > 3) {
-      const dist = this._levenshteinDistance(s, t);
+      const dist = this.#levenshteinDistance(s, t);
       const tolerance = Math.max(2, Math.floor(t.length * 0.3));
       return dist <= tolerance;
     }
@@ -281,7 +287,7 @@ export class DataManager {
       filters.text.length > 2 &&
       filters.searchType === "offer"
     ) {
-      await this._ensureOffersLoaded();
+      await this.#ensureOffersLoaded();
     }
 
     const filteredFeatures = this.companiesGeoJson.features.filter(
@@ -289,7 +295,7 @@ export class DataManager {
         const p = feature.properties;
 
         if (filters.sectors && filters.sectors.length > 0) {
-          const sectorName = this._getSectorName(p);
+          const sectorName = this.#getSectorName(p);
           if (!filters.sectors.includes(sectorName)) return false;
         }
 
@@ -298,7 +304,7 @@ export class DataManager {
         }
 
         if (filters.radius < 100 && filters.userPosition) {
-          const dist = this._calculateDistance(
+          const dist = this.#calculateDistance(
             filters.userPosition,
             feature.geometry.coordinates
           );
@@ -323,14 +329,14 @@ export class DataManager {
         if (filters.text && filters.text.trim() !== "") {
           const searchStr = filters.text.trim();
           if (filters.searchType === "company") {
-            if (!this._fuzzyMatch(p.company, searchStr)) return false;
+            if (!this.#fuzzyMatch(p.company, searchStr)) return false;
           } else if (filters.searchType === "offer") {
             const offers = this.offersCache
               ? this.offersCache[p.storage_id]
               : [];
             if (!offers || offers.length === 0) return false;
             const hasMatchingOffer = offers.some((o) =>
-              this._fuzzyMatch(o.title, searchStr)
+              this.#fuzzyMatch(o.title, searchStr)
             );
             if (!hasMatchingOffer) return false;
           }

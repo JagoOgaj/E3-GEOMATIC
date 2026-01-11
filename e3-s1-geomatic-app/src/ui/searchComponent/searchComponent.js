@@ -83,6 +83,7 @@ export class SearchComponent {
    * - Gestion du clic extérieur pour fermer les listes déroulantes.
    * - Saisie dans la barre de recherche avec Debounce.
    * @returns {void}
+   * @private
    */
   #setupEvents() {
     const header = this.element.querySelector(".widget-header");
@@ -111,7 +112,7 @@ export class SearchComponent {
       clearTimeout(this.debounceSearch);
       this.debounceSearch = setTimeout(() => {
         this.filters.text = e.target.value;
-        this._applyFilters();
+        this.#applyFilters();
       }, 300);
     });
   }
@@ -121,13 +122,14 @@ export class SearchComponent {
    * Récupère le GeoJSON filtré via le DataManager et demande au MapManager de mettre à jour la carte.
    * Met également à jour l'indicateur visuel (badge) si des filtres sont actifs.
    * @returns {Promise<void>}
+   * @private
    */
-  async _applyFilters() {
+  async #applyFilters() {
     if (this.mapManager && this.mapManager.userPosition) {
       this.filters.userPosition = this.mapManager.userPosition;
     }
 
-    this._updateBadge();
+    this.#updateBadge();
 
     const filteredGeoJson = await this.dataManager.filterCompanies(
       this.filters
@@ -144,8 +146,9 @@ export class SearchComponent {
    * Méthode privée. Met à jour l'icône de recherche pour indiquer visuellement
    * si des filtres sont actifs (effet de pulsation).
    * @returns {void}
+   * @private
    */
-  _updateBadge() {
+  #updateBadge() {
     let count = 0;
     if (this.filters.text) count++;
     if (this.filters.sectors.length > 0) count++;
@@ -382,7 +385,7 @@ export class SearchComponent {
           this.filters.searchType === "company"
             ? "Rechercher une entreprise..."
             : "Rechercher un poste...";
-        this._applyFilters();
+        this.#applyFilters();
       });
     });
 
@@ -429,7 +432,7 @@ export class SearchComponent {
             trigger.classList.add("selected");
           }
           select.classList.remove("open");
-          this._applyFilters();
+          this.#applyFilters();
         });
       });
     });
@@ -457,7 +460,7 @@ export class SearchComponent {
       document.body.classList.remove("focus-mode");
       document.body.classList.add("radius-tuning");
       this.filters.radius = val;
-      this._applyFilters();
+      this.#applyFilters();
     });
 
     const onRadiusChange = () => {
@@ -479,7 +482,7 @@ export class SearchComponent {
       }
 
       this.filters.radius = val;
-      this._applyFilters();
+      this.#applyFilters();
     };
 
     radiusInput.addEventListener("change", onRadiusChange);
@@ -494,7 +497,7 @@ export class SearchComponent {
 
     scoreInput.addEventListener("change", (e) => {
       this.filters.score = parseFloat(e.target.value);
-      this._applyFilters();
+      this.#applyFilters();
     });
 
     const tCheckboxes = container.querySelectorAll(".transport-checkbox input");
@@ -508,7 +511,7 @@ export class SearchComponent {
             (m) => m !== val
           );
         }
-        this._applyFilters();
+        this.#applyFilters();
       });
     });
   }

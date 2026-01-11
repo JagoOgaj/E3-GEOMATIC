@@ -62,6 +62,7 @@ export class ResultsComponent {
    * Méthode privée. Configure l'IntersectionObserver pour gérer le chargement infini (infinite scroll)
    * lorsque l'utilisateur fait défiler la liste vers le bas.
    * @returns {void}
+   * @private
    */
   #initIntersectionObserver() {
     const options = {
@@ -117,6 +118,7 @@ export class ResultsComponent {
    * Méthode privée. Affiche le lot suivant d'entreprises dans la liste (pagination côté client).
    * Gère également l'ajout et la suppression de l'élément sentinelle pour le scroll infini.
    * @returns {void}
+   * @private
    */
   #renderNextBatch() {
     if (this.renderedCount >= this.allCompanies.length) return;
@@ -189,6 +191,7 @@ export class ResultsComponent {
    * Méthode privée. Met à jour le texte et le style de l'en-tête du widget
    * en fonction du nombre de résultats trouvés.
    * @returns {void}
+   * @private
    */
   #updateHeader() {
     const count = this.allCompanies.length;
@@ -215,6 +218,7 @@ export class ResultsComponent {
    * - Délégation d'événements pour les clics sur les entreprises (accordéon).
    * - Délégation d'événements pour les clics sur les offres et les boutons favoris.
    * @returns {void}
+   * @private
    */
   #setupEvents() {
     const header = this.element.querySelector(".res-header");
@@ -269,6 +273,7 @@ export class ResultsComponent {
    * via le DataManager et génère le HTML correspondant.
    * @param {string} storageId - L'identifiant de stockage de l'entreprise.
    * @returns {Promise<void>}
+   * @private
    */
   async #loadAndRenderOffers(storageId) {
     const containerId = `offers-${storageId}`;
@@ -332,6 +337,7 @@ export class ResultsComponent {
    * @param {Event} e - L'événement de clic.
    * @param {HTMLElement} offerItem - L'élément DOM représentant l'offre.
    * @returns {Promise<void>}
+   * @private
    */
   async #handleFavClick(e, offerItem) {
     e.stopPropagation();

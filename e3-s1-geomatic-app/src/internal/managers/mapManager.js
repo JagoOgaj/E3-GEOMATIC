@@ -68,6 +68,7 @@ export class MapManager {
    * Si l'utilisateur accepte, centre la carte sur sa position.
    * Méthode privée.
    * @returns {void}
+   * @private
    */
   #initUserLocation() {
     if (navigator.geolocation) {
@@ -92,6 +93,7 @@ export class MapManager {
    * Utilise une icône pulsée personnalisée.
    * Méthode privée.
    * @returns {void}
+   * @private
    */
   #drawUserMarker() {
     const pulseIcon = L.divIcon({

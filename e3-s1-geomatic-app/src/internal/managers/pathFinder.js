@@ -65,6 +65,7 @@ export class PathFinder {
    * pour simplifier l'affichage final (ex: regrouper 10 arrêts de bus en un seul segment).
    * @param {Array<Object>} rawPath - Le chemin brut retourné par l'algorithme A*.
    * @returns {Array<Object>} Le chemin consolidé et lisible pour l'utilisateur.
+   * @private
    */
   #consolidatePath(rawPath) {
     if (!rawPath || rawPath.length === 0) return [];
@@ -163,6 +164,7 @@ export class PathFinder {
    * @param {number} lat - Latitude.
    * @param {number} lon - Longitude.
    * @returns {Object|null} Le nœud le plus proche ou null si aucun nœud n'est trouvé dans la zone.
+   * @private
    */
   #findNearest(lat, lon) {
     let nearest = null;
@@ -194,6 +196,7 @@ export class PathFinder {
    * @param {string} startId - Identifiant du nœud de départ.
    * @param {string} endId - Identifiant du nœud d'arrivée.
    * @returns {Object|null} Un objet contenant le chemin brut et le coût total, ou null si échec.
+   * @private
    */
   #runAStar(startId, endId) {
     if (!this.graph.nodes[startId] || !this.graph.nodes[endId]) return null;
@@ -264,6 +267,7 @@ export class PathFinder {
    * @param {Object} cameFrom - Carte associant chaque nœud à son prédécesseur.
    * @param {string} currentId - Identifiant du nœud final pour remonter la chaîne.
    * @returns {Object} Un objet contenant le tableau du chemin reconstruit et le coût total pondéré.
+   * @private
    */
   #reconstruct(cameFrom, currentId) {
     const path = [];
