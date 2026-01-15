@@ -28,3 +28,12 @@ cd e3-s1-geomatic-parser
 npm install
 npm run parser
 ```
+
+## App (front-end)
+
+:warning: Make sure to run the parser, or download all pre-processed outputs before running the app!
+
+### Installation
+
+1. Download, or create with the parser, the data required for the app. **TODO: Add download link**
+2. Extract the files in `e3-s1-geomatic-app`.
