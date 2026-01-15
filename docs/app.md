@@ -29,7 +29,7 @@ e3-s1-geomatic-app/
     │   │   └── uiManager.js   # Orchestrateur de l'interface utilisateur
     │   └── utils/
     │       ├── minHeap.js     # Implémentation d'un tas minimal
-    │       └── pahFinder.js   # Algorithme de recherche de chemin
+    │       └── pathFinder.js   # Algorithme de recherche de chemin
     └── ui/
         ├── favoriteComponent/ # Composant des favoris
         │   ├── favoritesComponent.js
