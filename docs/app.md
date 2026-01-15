@@ -54,9 +54,15 @@ e3-s1-geomatic-app/
             └── transportComponent.css
 ```
 
+## Informations cartographiques générales
+- Carte interactive avec fond [CartoDB](https://github.com/CartoDB/basemap-styles) (via Leaflet)
+- Marqueurs personnalisés pour les entreprises
+- Clustering intelligent des marqueurs selon la densité
+- Position utilisateur avec marqueur
+
 ## Architecture de l'application
 
-L'application suit une architecture modulaire basée sur des classes ES6 avec une séparation claire des responsabilités :
+L'application suit une architecture basée sur des classes avec une séparation des responsabilités :
 
 1. **Managers** : Gèrent la logique métier (données, carte, interface)
 2. **Composants UI** : Gèrent l'affichage et l'interaction avec l'utilisateur
@@ -65,72 +71,70 @@ L'application suit une architecture modulaire basée sur des classes ES6 avec un
 ### Gestion des données
 
 #### DataManager
-Responsable du chargement, de la mise en cache et du filtrage des données. Il gère :
-- Le chargement lazy des fichiers JSON/GeoJSON
-- Le filtrage des entreprises selon plusieurs critères
-- La jointure entre les différentes sources de données
+Responsable du chargement, mise en cache et filtrage des données. Fonctionnalités :
+- **Chargement lazy** : Les fichiers sont chargés uniquement quand nécessaire
+- **Cache mémoire** : Données conservées pour éviter les rechargements
+- **Filtrage intelligent** : Recherche floue (distance de Levenshtein) + filtres géographiques
+- **Jointure de données** : Association entreprises ↔ offres ↔ stations
 
 #### FavoritesManager
-Gère les offres favorites avec persistance dans le localStorage :
-- Ajout/suppression d'offres
-- Notification des observateurs en cas de changement
-- Normalisation des données pour le stockage
+Gère la persistance des offres favorites :
+- **LocalStorage** : Stockage client avec clé `geojob_favorites`
+- **Pattern Observer** : Notifie les composants des changements
+- **Normalisation** : Uniformisation des données pour le stockage
 
 ### Gestion de la carte
 
 #### MapManager
-Gère l'affichage cartographique avec Leaflet :
-- Affichage des marqueurs d'entreprises avec clustering (Leaflet.markercluster)
-- Affichage des stations de transport avec icônes personnalisées
-- Gestion de la géolocalisation utilisateur
-- Tracé des itinéraires avec polyline et marqueurs
-- Prévisualisation du rayon de recherche
+Interface cartographique avec Leaflet :
+- **Clustering** : Regroupement des marqueurs avec Leaflet.markercluster
+- **Marqueurs personnalisés** : Icônes spécifiques selon le type (entreprise, station, utilisateur)
+- **Gestion des couches** : Isolation des informations selon le contexte
+- **Calculs géographiques** : Prévisualisation de rayon, centrage automatique
 
 ### Gestion de l'interface utilisateur
 
 #### UIManager
-Orchestrateur de l'interface utilisateur :
-- Instanciation et coordination des composants UI
-- Gestion du mode focus (dépliage d'un widget masque les autres)
-- Coordination entre les différents modules
+Coordonne les différents composants UI :
+- **Instanciation** : Création et initialisation des widgets
+- **Communication** : Liaison entre composants via callbacks
+- **Mode focus** : Gestion de l'attention utilisateur (floutage carte, masquage widgets)
 
 ## Composants de l'interface utilisateur
 
-### SearchComponent
-Widget de recherche et de filtrage :
-- Barre de recherche textuelle avec debounce (attendre 300ms pour les saisies textuelles (optimisation performance))
-- Filtres avancés (secteur, taille, rayon, score de transport)
-- Sélecteurs personnalisés avec multi-sélection
-- Curseurs pour le rayon de recherche et le score de desservance
-- Prévisualisation du rayon sur la carte
+### SearchComponent : Recherche et filtrage
+**Caractéristiques techniques** :
+- **Debounce** : Attente 300ms pour les saisies textuelles (optimisation performance)
+- **Filtres cumulatifs** : 6 critères combinables (secteur, taille, rayon, etc.)
+- **Prévisualisation** : Affichage du rayon de recherche sur la carte en temps réel
 
-### FavoritesComponent
-Gestion des entreprises et offres favorites :
-- Stockage dans le localStorage
-- Affichage de la liste des favoris
-- Export des favoris
+### FavoritesComponent : Gestion des favoris
+**Caractéristiques techniques** :
+- **Persistance LocalStorage** : Stockage côté client avec clé `geojob_favorites`
+- **Pattern Observer** : Notification automatique des composants abonnés lors des changements
+- **Normalisation des données** : Uniformisation des structures pour garantir la cohérence
+- **Export des favoris**
 
-### ResultsComponent
+### ResultsComponent : Liste des résultats
 Affichage des résultats de recherche :
 - Liste des entreprises trouvées
 - Tri par pertinence ou distance
 - Indication du nombre d'offres par entreprise
 
-### ModalComponent
-Modale d'affichage des détails :
-- Informations sur l'entreprise
-- Liste des offres d'emploi
-- Détails d'une offre spécifique
-- Affichage des stations de transport à proximité
+**Optimisations** :
+- **Pagination infinie** : Chargement par lots de 25 entreprises avec IntersectionObserver
+- **Accordéon dynamique** : Chargement lazy des offres au clic sur l'entreprise
+- **Mise à jour en temps réel** : Synchronisation avec les favoris
 
-## Fonctionnalités principales
+### ModalComponent : Système de modales
+**Deux modes d'affichage** :
+1. **Liste d'offres** : Overlay léger pour la sélection rapide
+2. **Détail complet** : Modale riche avec toutes les informations et actions, dont stations de transport à proximité
 
-### Visualisation cartographique
-- Carte interactive avec fond OpenStreetMap (via Leaflet)
-- Marqueurs personnalisés pour les entreprises
-- Clustering intelligent des marqueurs selon la densité
-- Marqueurs spécifiques pour les stations de transport
-- Position utilisateur avec marqueur animé
+### TransportComponent & RouteDetailsComponent
+**Fonctionnalités spécialisées** :
+- **Visualisation transport** : Indicateur de stations affichées sur la carte
+- **Détails itinéraire** : Affichage du trajet calculé avec étapes et temps estimé
 
 ### Calcul d'itinéraire
 - Calcul d'itinéraire entre la position utilisateur et une entreprise
@@ -143,16 +147,35 @@ Implémente l'algorithme A* pour le calcul d'itinéraire :
 - Optimisation avec tas min (MinHeap)
 - Calcul du chemin le plus court entre deux points
 
+## Flux d'interaction utilisateur
+
+### Séquence de recherche
+1. Utilisateur saisit du texte ou ajuste des filtres
+2. SearchComponent envoie les critères à DataManager après délai (debounce)
+3. DataManager filtre les données et renvoie un GeoJSON réduit
+4. MapManager met à jour les marqueurs sur la carte
+5. ResultsComponent affiche la liste correspondante
+6. Utilisateur clique sur un marqueur ou un élément de liste
+7. ModalComponent affiche les offres disponibles
+8. Utilisateur sélectionne une offre pour voir le détail
+
+### Séquence de calcul d'itinéraire
+1. Utilisateur clique sur "Itinéraire" dans la modale de détail
+2. PathFinder récupère le graphe des transports et exécute l'algorithme A*
+3. MapManager dessine la ligne de trajet et les points d'étape
+4. RouteDetailsComponent affiche les détails du parcours
+5. L'interface bascule en mode itinéraire (masquage des autres widgets)
+
 ## Technologies utilisées
 
-- **HTML5/CSS3** : Structure et styles de l'application
-- **JavaScript ES6+** : Logique de l'application avec classes et modules
+- **HTML/CSS** : Structure et styles de l'application
+- **JavaScript** : Logique de l'application avec classes et modules
 - **Leaflet** : Bibliothèque cartographique
 - **Leaflet.markercluster** : Clustering des marqueurs
 - **Font Awesome** : Icônes
 - **LocalStorage** : Persistance des données utilisateur
 
-## Flux de données et configuration
+## Configuration
 
 ### Fichiers de données requis
 
@@ -169,17 +192,21 @@ L'application nécessite 5 fichiers de données générés par le parser :
 ### Chargement des données
 - Chargement lazy (à la demande) des fichiers de données volumineux
 - Mise en cache des données déjà chargées
-- Préchargement progressif avec indicateur visuel
-
-### Affichage cartographique
-- Clustering des marqueurs pour les grandes quantités
-- Chargement progressif des marqueurs (chunked loading)
-- Optimisation des icônes personnalisées
+- **Clustering** : Regroupement automatique selon le niveau de zoom
+- **Chargement progressif** : Marqueurs ajoutés par lots pour éviter le blocage (chunk loading)
 
 ### Interface utilisateur
 - Animations fluides avec transitions CSS
 - Mode focus pour améliorer la lisibilité
 - Debounce sur les entrées utilisateur pour réduire les calculs
+
+### Algorithmes
+- **Recherche floue** : Distance de Levenshtein pour les correspondances approximatives
+  - Dans `src/internal/managers/dataManager.js`
+- **Calcul de distance** : Formule haversine pour les distances géodésiques
+  - Dans `src/internal/managers/dataManager.js`
+- **Recherche de chemin** : Algorithme A* avec tas min pour l'optimisation
+  - Dans `src/internal/managers/pathFinder.js`
 
 ## Configuration
 
@@ -220,29 +247,15 @@ L'application inclut une gestion d'erreurs robuste :
 - Modales avec transitions fluides
 - Effets de flou sur la carte en mode focus
 
-## Exemple d'utilisation
-
-```javascript
-// Initialisation de l'application
-const dataManager = new DataManager();
-const favManager = new FavoritesManager();
-const mapManager = new MapManager("map");
-const pathFinder = new PathFinder();
-
-// Chargement des données
-await dataManager.init();
-
-// Affichage des marqueurs
-const geoJson = dataManager.getCompanies();
-mapManager.addCompanyMarkers(geoJson, (companyProps) => {
-  // Callback lors du clic sur un marqueur
-  console.log("Entreprise sélectionnée:", companyProps);
-});
-```
-
 ## Limitations
 
-- L'application nécessite une connexion internet pour charger les données et la carte
-- La précision du calcul d'itinéraire dépend de la qualité des données GTFS
-- Le nombre d'entreprises affichées dépend des capacités du navigateur
-- La géolocalisation doit être activée pour certaines fonctionnalités
+- L'application nécessite une connexion internet pour charger les données et la carte (les fonds de carte et certains CSS sont hébergés en ligne par des serveurs tiers)
+- La géolocalisation doit être activée
+- Hérite des limitations des datasets et du parser :
+  - Seules les entreprises en **France** et possédant des **offres d'apprentissage** provenant de **la bonne alternance** sont affichées.
+  - Calcul d'itinéraire :
+    - Le calcul de temps de trajet est basé sur des approximations. Une solution pré-calculée précise s'avérerait inexploitable car trop grande. L'utilisation forcée de JavaScript vanilla en front-end empêche de maximiser les performances.
+    - Les itinéraires possibles sont limités afin de maintenir des performances optimales et de réduire la quantité de données qui doivent transiter par le réseau.
+  - Les datasets mis à disposition :
+    - Sont parfois modifiés ou supprimés de façon imprévue, ce qui crée des problèmes dans le recoupement de certaines données.
+    - Sont parfois imprécis et de nombreux champs ne sont pas renseignés.
