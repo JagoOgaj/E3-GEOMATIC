@@ -254,15 +254,17 @@ stop_id,stop_name,stop_lat,stop_lon,dataset_id,resource_id,dataset_custom_title,
 ## Exemple complet d'exécution
 
 ```bash
+cd e3-s1-geomatic-parser
+
 # Installation des dépendances
-npm install
+npm install # ou 'npm ci' pour garantir la compatibilité
 
 # Configuration
 cp .env.defaults .env
 # Éditer .env avec les chemins appropriés
 
 # Exécution
-node e3-s1-geomatic-parser/index.js
+npm run parser
 ```
 
 **Sortie console typique :**
@@ -276,20 +278,12 @@ Phase 4: Graph Building: 210.45s
 All operations completed successfully.
 ```
 
-## Gestion des erreurs
-
-Le pipeline inclut une gestion d'erreurs robuste :
-- Validation des fichiers d'entrée
-- Logging détaillé des erreurs
-- Continuation sur erreur pour les offres individuelles
-- Nettoyage des ressources (fermeture DB)
-
 ## Performances
 
 - **Streaming JSON** : Traitement de fichiers volumineux sans surcharge mémoire
 - **Parallélisation** : Utilisation de `p-limit` pour limiter le nombre de requêtes concurrentes
 - **Indexation** : Index DuckDB optimisés pour les recherches SIRENE et géospatiales
-- **Cache** : Mise en cache des datasets GTFS pour éviter les téléchargements répétés
+- **Cache** : Téléchargement des datasets GTFS
 
 ## Dépendances principales
 
