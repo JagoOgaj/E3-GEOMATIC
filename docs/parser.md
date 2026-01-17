@@ -294,10 +294,12 @@ Le pipeline inclut une gestion d'erreurs robuste :
 ## Dépendances principales
 
 - `duckdb` : Base de données embarquée
+- `kdbush`, `geokdbush` : Indexation spaciale pour recherches de proximité rapides
 - `stream-json` : Traitement streaming des JSON
-- `p-limit` : Limitation de concurrence
-- `node-fetch` : Téléchargement HTTP
+- `p-limit` : Limitation de concurrence des opérations asynchrones
+- `node-stream-zip` : Décompresson de fichiers ZIP en streaming
 - `dotenv` : Gestion des variables d'environnement
+- `csv-parser` : Pour lire les fichiers CSV
 
 ## Limitations
 
