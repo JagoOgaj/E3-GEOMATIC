@@ -226,7 +226,7 @@ export class GraphBuilder {
   }
 
   /**
-   * Modifié: Sérialise le graphe complet en JSON et l'écrit sur le disque
+   * Sérialise le graphe complet en JSON et l'écrit sur le disque
    * Le JSON est standard et lisible par le navigateur via fetch()
    * @param {string} outputPath - Chemin de destination (doit finir par .json)
    * @private
