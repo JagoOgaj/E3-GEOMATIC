@@ -144,6 +144,56 @@
   background: #bbdefb;
 }
 
+/* Conteneur du menu d'export */
+.fav-export-menu {
+  position: relative;
+  margin-right: 10px;
+}
+
+/* Menu déroulant d'export */
+.fav-export-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 8px 0;
+  min-width: 180px;
+  display: none;
+  z-index: 1001;
+}
+
+.fav-export-menu.active .fav-export-dropdown {
+  display: block;
+}
+
+/* Options du menu d'export */
+.export-option {
+  display: block;
+  width: 100%;
+  padding: 10px 15px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #2c3e50;
+  transition: background 0.2s;
+}
+
+.export-option:hover {
+  background: #f8f9fa;
+}
+
+.export-option:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.export-option:last-child {
+  border-radius: 0 0 8px 8px;
+}
+
 .fav-close-btn {
   width: 40px;
   height: 40px;
