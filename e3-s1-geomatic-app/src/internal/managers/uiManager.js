@@ -5,6 +5,7 @@ import { ModalComponent } from "../../ui/modalComponent/modalComponent.js";
 import { NavigationComponent } from "../../ui/navigationComponent/navigationComponent.js";
 import { TransportComponent } from "../../ui/transportComponent/transportComponent.js";
 import { RouteDetailsComponent } from "../../ui/routeDetailsComponent/routeDetailsComponent.js";
+import { UserLocationComponent } from "../../ui/userLocalisationComponent/userLocationComponent.js";
 
 /**
  * Orchestrateur principal de l'interface utilisateur.
@@ -28,6 +29,7 @@ export class UIManager {
     this.navComponent = null;
     this.transportComponent = null;
     this.routeComponent = null;
+    this.userLocationComponent = null;
   }
 
   /**
@@ -39,18 +41,42 @@ export class UIManager {
     this.searchComponent = new SearchComponent(
       "ui-layer",
       this.mapManager,
-      this.dataManger
+      this.dataManger,
     );
-    this.favoritesComponent = new FavoritesComponent("ui-layer", this.favManager);
+    this.favoritesComponent = new FavoritesComponent(
+      "ui-layer",
+      this.favManager,
+    );
     this.resultsComponent = new ResultsComponent(
       "ui-layer",
       this.favManager,
-      this.dataManger
+      this.dataManger,
     );
-    this.jobModal = new ModalComponent(this.favManager);
+    this.jobModal = new ModalComponent(this.favManager, this.mapManager);
     this.navComponent = new NavigationComponent("ui-layer", this.mapManager);
     this.routeComponent = new RouteDetailsComponent();
     this.transportComponent = new TransportComponent("ui-layer");
+
+    this.userLocationComponent = new UserLocationComponent(
+      this.mapManager,
+      (pos) => {
+        this.mapManager.setUserPosition(pos.lat, pos.lng);
+
+        if (this.navComponent) {
+          this.navComponent.updateButtonState();
+        }
+      },
+    );
+
+    this.userLocationComponent.onStartSelection = () => {
+      this.toggleGlobalVisibility(false);
+    };
+
+    this.userLocationComponent.onEndSelection = () => {
+      this.toggleGlobalVisibility(true);
+    };
+
+    this.userLocationComponent.init();
 
     this.searchComponent.init();
     this.favoritesComponent.init();
@@ -104,6 +130,10 @@ export class UIManager {
             if (w.element) w.element.classList.add("widget-hidden");
           }
         });
+        if (this.navComponent) this.navComponent.hide();
+
+        if (this.userLocationComponent) this.userLocationComponent.hide();
+
         document.body.classList.add("focus-mode");
       };
 
@@ -117,6 +147,9 @@ export class UIManager {
                 w.element.classList.remove("widget-hidden");
               }
             });
+            if (this.navComponent) this.navComponent.show();
+
+            if (this.userLocationComponent) this.userLocationComponent.show();
           }
         }, 200);
       };
@@ -144,5 +177,43 @@ export class UIManager {
       });
     }
     btn.style.display = "block";
+  }
+
+  /**
+   * Méthode utilitaire pour basculer la visibilité de toute l'interface
+   * sauf la carte.
+   * @param {boolean} isVisible - true pour afficher, false pour cacher
+   */
+  toggleGlobalVisibility(isVisible) {
+    const method = isVisible ? "remove" : "add";
+
+    const components = [
+      this.searchComponent?.element,
+      this.favoritesComponent?.element,
+      this.resultsComponent?.element,
+      this.navComponent?.element,
+    ];
+
+    components.forEach((el) => {
+      if (el) el.classList[method]("widget-hidden");
+    });
+
+    if (isVisible && this.userLocationComponent) {
+      this.userLocationComponent.show();
+    }
+
+    if (isVisible && this.navComponent) {
+      this.navComponent.updateButtonState();
+    }
+
+    if (this.userLocationComponent) {
+      if (isVisible) {
+        this.userLocationComponent.show();
+
+        if (this.navComponent) this.navComponent.updateButtonState();
+      } else {
+        this.userLocationComponent.hide();
+      }
+    }
   }
 }

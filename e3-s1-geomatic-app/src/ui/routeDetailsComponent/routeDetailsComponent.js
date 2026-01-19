@@ -1,8 +1,10 @@
 /**
- * Composant d'interface utilisateur affichant les étapes détaillées d'un itinéraire.
- * Se présente sous forme d'une fenêtre modale flottante listant les changements de transport
- * et la durée totale du trajet.
- * * Dépendances : Aucune.
+ * Composant d'interface utilisateur responsable de l'affichage détaillé de l'itinéraire.
+ * Se présente sous forme d'une fenêtre modale ("timeline") listant chaque étape du trajet :
+ * mode de transport, durée, direction, arrêts intermédiaires et changements.
+ *
+ * Ce composant gère uniquement l'affichage (Vue) et délègue l'action de quitter
+ * l'itinéraire via un callback externe.
  */
 export class RouteDetailsComponent {
   constructor() {
@@ -12,9 +14,9 @@ export class RouteDetailsComponent {
   }
 
   /**
-   * Construit la structure HTML du widget, l'injecte dans le corps du document (body)
-   * et configure les événements de clic pour la fermeture simple ou la sortie du mode itinéraire.
-   * @returns {void}
+   * Initialise le composant en créant la structure DOM complète de la modale.
+   * Injecte le HTML dans le document et configure les écouteurs d'événements
+   * pour le bouton de fermeture (croix) et le bouton "Quitter l'itinéraire".
    */
   init() {
     this.element = document.createElement("div");
@@ -26,9 +28,8 @@ export class RouteDetailsComponent {
             </div>
             <div class="rd-content"></div>
             <div class="rd-footer">
-                <div id="rd-total-time" style="margin-bottom:10px;"></div>
-                
-                <button id="btn-exit-route" style="width:100%; padding:10px; background:#e74c3c; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">
+                <div id="rd-total-time" class="total-time-badge"></div>
+                <button id="btn-exit-route" class="btn-exit">
                     <i class="fas fa-times-circle"></i> Quitter l'itinéraire
                 </button>
             </div>
@@ -47,65 +48,115 @@ export class RouteDetailsComponent {
   }
 
   /**
-   * Définit le callback à exécuter lorsque l'utilisateur clique sur le bouton "Quitter l'itinéraire".
-   * Permet au contrôleur principal de nettoyer la carte (supprimer le tracé).
-   * @param {Function} callback - La fonction de callback.
-   * @returns {void}
+   * Définit la fonction de rappel à exécuter lorsque l'utilisateur clique sur
+   * le bouton "Quitter l'itinéraire".
+   * @param {Function} callback - La fonction à appeler pour sortir du mode itinéraire.
    */
   setOnExit(callback) {
     this.onExitCallback = callback;
   }
 
   /**
-   * Remplit le widget avec les données de l'itinéraire calculé et l'affiche à l'écran.
-   * Génère dynamiquement la liste des étapes avec les icônes et couleurs appropriées selon le mode de transport.
-   * @param {Object} pathData - Les données du chemin (tableau d'étapes et durée totale).
-   * @returns {void}
+   * Génère et affiche les détails du trajet à partir des données fournies.
+   * Cette méthode transforme les données brutes du chemin (PathFinder) en éléments visuels HTML,
+   * en appliquant une logique de présentation spécifique selon le type de transport
+   * (icônes, couleurs, libellés "Direction" vs "Marcher vers", badge de nombre d'arrêts).
+   *
+   * @param {Object} pathData - L'objet contenant les données du chemin.
+   * @param {number} pathData.totalDuration - La durée totale en secondes.
+   * @param {Array} pathData.path - La liste des étapes (segments) du trajet.
    */
   show(pathData) {
     const container = this.element.querySelector(".rd-content");
+
+    const totalMin = Math.round(pathData.totalDuration / 60);
+    this.element.querySelector("#rd-total-time").innerHTML =
+      `<span>Durée totale : </span><b>${totalMin} min</b>`;
+
     container.innerHTML = pathData.path
       .map((step, i) => {
         if (step.type === "DEPART") return "";
 
         let icon = "fas fa-walking";
-        let color = "#7f8c8d";
+        let color = "#95a5a6";
+        let modeLabel = "Marche";
+        let isWalk = true;
 
         if (step.type.includes("METRO")) {
           icon = "fas fa-subway";
           color = "#27ae60";
-        }
-        if (step.type.includes("BUS")) {
+          modeLabel = "Métro";
+          isWalk = false;
+        } else if (step.type.includes("BUS")) {
           icon = "fas fa-bus";
           color = "#2980b9";
-        }
-        if (step.type.includes("TRAM")) {
+          modeLabel = "Bus";
+          isWalk = false;
+        } else if (step.type.includes("TRAM")) {
           icon = "fas fa-train";
           color = "#8e44ad";
+          modeLabel = "Tram";
+          isWalk = false;
+        } else if (step.type.includes("TRAIN") || step.type.includes("RER")) {
+          icon = "fas fa-train";
+          color = "#e67e22";
+          modeLabel = "Train";
+          isWalk = false;
+        }
+
+        const duration = Math.round(step.weight / 60) || 1;
+        const stopsInfo =
+          !isWalk && step.stopsCount > 0
+            ? `<span class="badge-stops">${step.stopsCount} arrêt${step.stopsCount > 1 ? "s" : ""}</span>`
+            : "";
+
+        const lineBadge = !isWalk
+          ? `<span class="line-badge" style="background:${color}">${step.line}</span>`
+          : "";
+
+        let mainText = "";
+        let subText = "";
+
+        if (isWalk) {
+          mainText = `Marcher vers <strong>${step.name}</strong>`;
+        } else {
+          const direction = step.headsign ? `Dir. ${step.headsign}` : "";
+          mainText = `${lineBadge} ${direction}`;
+          subText = `Descendre à : <strong>${step.name}</strong>`;
         }
 
         return `
-                <div class="rd-step">
-                    <div class="step-icon" style="background:${color}"><i class="${icon}"></i></div>
-                    <div class="step-info">
-                        <strong>${step.line}</strong> vers ${step.name}
+            <div class="rd-step-item">
+                <div class="step-left-col">
+                    <div class="step-icon-bubble" style="background:${color}">
+                        <i class="${icon}"></i>
+                    </div>
+                    <div class="step-line-connector"></div>
+                </div>
+                
+                <div class="step-right-col">
+                    <div class="step-header">
+                        <span class="step-mode">${modeLabel}</span>
+                        <span class="step-duration"><i class="far fa-clock"></i> ${duration} min</span>
+                    </div>
+                    
+                    <div class="step-body">
+                        <div class="step-main-text">${mainText}</div>
+                        ${subText ? `<div class="step-sub-text">${subText}</div>` : ""}
+                        ${stopsInfo ? `<div class="step-meta">${stopsInfo}</div>` : ""}
                     </div>
                 </div>
-            `;
+            </div>
+        `;
       })
       .join("");
-
-    const totalMin = Math.round(pathData.totalDuration / 60);
-    this.element.querySelector(
-      "#rd-total-time"
-    ).innerHTML = `Temps total estimé : <b>${totalMin} min</b>`;
 
     this.element.classList.remove("hidden");
   }
 
   /**
-   * Masque le widget de détails sans détruire son contenu.
-   * @returns {void}
+   * Masque la modale de détails en lui appliquant la classe CSS de dissimulation.
+   * Ne détruit pas le composant du DOM, permettant une réouverture rapide.
    */
   hide() {
     this.element.classList.add("hidden");

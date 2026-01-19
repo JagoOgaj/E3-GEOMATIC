@@ -9,7 +9,8 @@
   background: #ffffff;
   border-radius: 30px;
 
-  box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px,
+  box-shadow:
+    rgba(50, 50, 93, 0.25) 0px 50px 100px -20px,
     rgba(0, 0, 0, 0.3) 0px 30px 60px -30px,
     rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;
 
@@ -22,9 +23,12 @@
   opacity: 1;
   transform: scale(1) translateY(0);
 
-  transition: width 0.5s cubic-bezier(0.25, 1, 0.5, 1),
-    max-height 0.5s cubic-bezier(0.25, 1, 0.5, 1), border-radius 0.4s ease 0.1s,
-    box-shadow 0.3s ease, opacity 0.4s ease,
+  transition:
+    width 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+    max-height 0.5s cubic-bezier(0.25, 1, 0.5, 1),
+    border-radius 0.4s ease 0.1s,
+    box-shadow 0.3s ease,
+    opacity 0.4s ease,
     transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -65,7 +69,9 @@
   justify-content: center;
   z-index: 2;
 
-  transition: color 0.3s, transform 0.2s;
+  transition:
+    color 0.3s,
+    transform 0.2s;
 }
 
 .search-widget.expanded .search-icon-btn i {
@@ -153,7 +159,9 @@
   padding: 20px;
   opacity: 0;
   transform: translateY(15px);
-  transition: opacity 0.3s ease, transform 0.4s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.4s ease;
 
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
@@ -217,8 +225,10 @@
 
   padding: 0 18px;
 
-  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.4s ease 0.1s, padding 0.4s ease;
+  transition:
+    max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.4s ease 0.1s,
+    padding 0.4s ease;
 
   border-top: none;
 }
@@ -620,4 +630,37 @@ input:checked + .slider:before {
 .pulse-active {
   color: #e74c3c !important;
   animation: pulse-red 2s infinite ease-in-out;
+}
+
+.select-option.selected-opt {
+  background-color: #e3f2fd;
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.select-option.selected-opt i {
+  color: var(--accent-color);
+  margin-left: 10px;
+}
+
+.radius-wrapper.disabled-section {
+  opacity: 0.6;
+  pointer-events: none;
+  filter: grayscale(1);
+  position: relative;
+}
+
+.radius-wrapper.disabled-section::after {
+  content: " (Position requise)";
+  display: block;
+  font-size: 0.75rem;
+  color: #e74c3c;
+  font-weight: 600;
+  margin-top: 4px;
+  text-align: center;
+}
+
+.radius-wrapper.disabled-section input[type="range"] {
+  cursor: not-allowed;
+  background: #e9ecef;
 }

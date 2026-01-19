@@ -17,13 +17,14 @@
   flex-direction: column;
   z-index: 1000;
 
-  transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1),
+  transition:
+    width 0.4s cubic-bezier(0.25, 1, 0.5, 1),
     height 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .results-widget.expanded {
-  width: 40vw;
-  height: 60vh;
+  width: 75vw;
+  height: 80vh;
   border-radius: 20px;
 }
 
@@ -72,7 +73,6 @@
   margin-top: 2px;
 }
 
-/* Conteneur du menu d'export */
 .res-export-menu {
   position: relative;
   margin-right: 15px;
@@ -83,7 +83,6 @@
   display: block;
 }
 
-/* Bouton d'export */
 .res-export-btn {
   background: #f1f3f5;
   border: none;
@@ -103,7 +102,6 @@
   color: white;
 }
 
-/* Menu déroulant d'export */
 .res-export-dropdown {
   position: absolute;
   top: 100%;
@@ -121,7 +119,6 @@
   display: block;
 }
 
-/* Options du menu d'export */
 .export-option {
   display: block;
   width: 100%;
@@ -173,6 +170,8 @@
   overflow: hidden;
   transition: all 0.3s ease;
   position: relative;
+  border-bottom: 1px solid #f1f2f6;
+  transition: background-color 0.2s;
 }
 
 .company-card:hover {
@@ -185,6 +184,7 @@
   border-color: var(--accent-color, #3498db);
   box-shadow: 0 8px 20px rgba(52, 152, 219, 0.15);
   transform: none;
+  background: #fff;
 }
 
 .company-header {
@@ -237,6 +237,11 @@
   color: #bdc3c7;
   transition: transform 0.3s ease;
 }
+
+.company-header .accordion-chevron {
+  transition: transform 0.3s ease;
+}
+
 .company-card.open .accordion-chevron {
   transform: rotate(180deg);
   color: var(--accent-color, #3498db);
@@ -245,15 +250,35 @@
 .offers-list-container {
   max-height: 0;
   overflow: hidden;
-  background: #f8f9fa;
+  opacity: 0;
+  background-color: #f8f9fa;
 
-  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  border-top: 1px solid transparent;
+  transition:
+    max-height 0.4s ease-in-out,
+    opacity 0.3s ease-in-out;
 }
 
 .company-card.open .offers-list-container {
-  max-height: 500px;
-  border-top-color: #ecf0f1;
+  max-height: 60vh;
+  opacity: 1;
+  border-top: 1px solid #f1f2f6;
+  padding-bottom: 0;
+
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+  scrollbar-color: #bdc3c7 #f8f9fa;
+}
+
+.company-card.open .offers-list-container::-webkit-scrollbar {
+  width: 6px;
+}
+.company-card.open .offers-list-container::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+.company-card.open .offers-list-container::-webkit-scrollbar-thumb {
+  background-color: #bdc3c7;
+  border-radius: 3px;
 }
 
 .offer-item {
@@ -342,4 +367,98 @@
 }
 .btn-fav.active {
   color: #e74c3c;
+}
+
+.res-actions-header {
+  display: none;
+  align-items: center;
+  margin-left: auto;
+  margin-right: 15px;
+  position: relative;
+}
+
+.results-widget.expanded .res-actions-header {
+  display: flex;
+}
+
+.see-more-container {
+  padding: 10px 20px;
+  text-align: center;
+  background: #fff;
+  border-top: 1px solid #eee;
+}
+
+.btn-see-more-offers {
+  background: #e3f2fd;
+  color: #1976d2;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-see-more-offers:hover {
+  background: #bbdefb;
+  transform: translateY(-1px);
+}
+
+.btn-see-more-offers i {
+  pointer-events: none;
+}
+.btn-see-more-offers:hover {
+  background: #bbdefb;
+  transform: translateY(-1px);
+}
+
+.btn-export-trigger {
+  background: transparent;
+  border: none;
+  color: #95a5a6;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 5px;
+  position: relative;
+  z-index: 10;
+}
+
+.btn-export-trigger:hover {
+  color: #3498db;
+}
+
+.export-menu {
+  position: absolute;
+  top: 35px;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  width: 160px;
+  z-index: 100;
+  overflow: hidden;
+  flex-direction: column;
+  display: flex;
+  border: 1px solid #eee;
+}
+
+.export-menu.hidden {
+  display: none;
+}
+
+.export-option {
+  padding: 10px 15px;
+  font-size: 0.9rem;
+  color: #2c3e50;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.export-option:hover {
+  background: #f8f9fa;
+  color: #3498db;
 }

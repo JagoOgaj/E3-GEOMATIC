@@ -93,7 +93,7 @@ export class SearchComponent {
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".custom-select")) {
         const openSelects = this.element.querySelectorAll(
-          ".custom-select.open"
+          ".custom-select.open",
         );
         openSelects.forEach((s) => s.classList.remove("open"));
       }
@@ -132,7 +132,7 @@ export class SearchComponent {
     this.#updateBadge();
 
     const filteredGeoJson = await this.dataManager.filterCompanies(
-      this.filters
+      this.filters,
     );
 
     this.mapManager.updateMarkers(filteredGeoJson, (companyProps) => {
@@ -192,6 +192,27 @@ export class SearchComponent {
       if (content) content.classList.add("visible");
     }, 400);
 
+    const radiusSection = this.element.querySelector(".radius-wrapper");
+    const radiusInput = this.element.querySelector("#radius-range");
+
+    const hasPosition =
+      this.mapManager.userPosition && this.mapManager.userPosition.lat;
+
+    if (!hasPosition) {
+      if (radiusSection) {
+        radiusSection.classList.add("disabled-section");
+
+        radiusSection.title =
+          "Veuillez activer votre localisation pour utiliser ce filtre";
+      }
+      if (radiusInput) {
+        radiusInput.disabled = true;
+      }
+    } else {
+      if (radiusSection) radiusSection.classList.remove("disabled-section");
+      if (radiusInput) radiusInput.disabled = false;
+    }
+
     if (this.onExpand) this.onExpand();
   }
 
@@ -224,15 +245,19 @@ export class SearchComponent {
   }
 
   /**
-   * Méthode privée. Construit dynamiquement le DOM des filtres (Secteurs, Tailles, Rayon, Score).
-   * Récupère les options disponibles depuis le DataManager.
+   * Méthode privée. Construit dynamiquement le DOM des filtres.
+   * Gère le tri alphabétique pour les secteurs et numérique pour les tailles.
    * @returns {void}
    */
   #buildInternalDOM() {
     const container = this.element.querySelector("#dynamic-content-area");
     const options = this.dataManager.extractFilterOptions();
 
-    const sectorOptions = options.sectors
+    const sortedSectors = [...options.sectors].sort((a, b) =>
+      a.localeCompare(b, "fr", { sensitivity: "base" }),
+    );
+
+    const sectorOptions = sortedSectors
       .map((s) => {
         const isSelected = this.filters.sectors.includes(s);
         return `<div class="select-option ${
@@ -243,25 +268,67 @@ export class SearchComponent {
       })
       .join("");
 
-    const sizeOptions = options.sizes
+    const specialLabels = [
+      "Etablissement non employeur",
+      "Non diffusé",
+      "Non renseigné",
+      "0 salarié",
+    ];
+
+    const specialSizesFound = options.sizes.filter((s) =>
+      specialLabels.some((label) =>
+        s.toLowerCase().includes(label.toLowerCase()),
+      ),
+    );
+
+    const numericSizes = options.sizes.filter(
+      (s) => !specialSizesFound.includes(s),
+    );
+
+    numericSizes.sort((a, b) => {
+      const extractNumber = (str) => {
+        const match = str.match(/(\d+)/);
+        return match ? parseInt(match[0], 10) : 0;
+      };
+      return extractNumber(a) - extractNumber(b);
+    });
+
+    let specialGroupHtml = "";
+    if (specialSizesFound.length > 0) {
+      const isGroupSelected = specialSizesFound.every((val) =>
+        this.filters.size.includes(val),
+      );
+      specialGroupHtml = `<div class="select-option ${
+        isGroupSelected ? "selected-opt" : ""
+      }" data-type="size" data-val="__SPECIAL_GROUP__">
+          Inconnu / Non employeur ${
+            isGroupSelected ? '<i class="fas fa-check"></i>' : ""
+          }
+      </div>`;
+    }
+
+    const numericSizesHtml = numericSizes
       .map((s) => {
         const isSelected = this.filters.size.includes(s);
         return `<div class="select-option ${
           isSelected ? "selected-opt" : ""
         }" data-type="size" data-val="${s}">
-                    ${s} ${isSelected ? '<i class="fas fa-check"></i>' : ""}
-                  </div>`;
+                  ${s} ${isSelected ? '<i class="fas fa-check"></i>' : ""}
+                </div>`;
       })
       .join("");
+
+    const sizeOptionsHtml = specialGroupHtml + numericSizesHtml;
 
     const sectorLabel =
       this.filters.sectors.length > 0
         ? `${this.filters.sectors.length} sélectionné(s)`
         : "Choisir un secteur...";
-    const sizeLabel =
-      this.filters.size.length > 0
-        ? `${this.filters.size.length} sélectionné(s)`
-        : "Toutes tailles";
+
+    let sizeLabel = "Toutes tailles";
+    if (this.filters.size.length > 0) {
+      sizeLabel = `${this.filters.size.length} sélectionné(s)`;
+    }
 
     const radiusVal = this.filters.radius;
     const radiusText = radiusVal >= 100 ? "Toute la France" : `${radiusVal} km`;
@@ -316,8 +383,8 @@ export class SearchComponent {
                               this.filters.size.length > 0 ? "selected" : ""
                             }">${sizeLabel}</div>
                             <div class="select-options">
-                                <div class="select-option" data-type="size" data-val="">Toutes tailles</div>
-                                ${sizeOptions}
+                                <div class="select-option" data-type="size" data-val="">Toutes tailles (Reset)</div>
+                                ${sizeOptionsHtml}
                             </div>
                         </div>
                     </div>
@@ -358,11 +425,21 @@ export class SearchComponent {
         `;
 
     this.#bindDynamicEvents(container);
+
+    const radiusSection = container.querySelector(".radius-wrapper");
+    const radiusInput = container.querySelector("#radius-range");
+    const hasPosition =
+      this.mapManager.userPosition && this.mapManager.userPosition.lat;
+
+    if (!hasPosition) {
+      if (radiusSection) radiusSection.classList.add("disabled-section");
+      if (radiusInput) radiusInput.disabled = true;
+    }
   }
 
   /**
-   * Méthode privée. Attache les événements aux éléments DOM générés dynamiquement
-   * (Selecteurs Custom, Sliders Rayon/Score, Checkbox Modes, Switch Type).
+   * Méthode privée. Attache les événements sans reconstruire le DOM au clic.
+   * Met à jour visuellement l'élément cliqué pour éviter le "saut".
    * @param {HTMLElement} container - Le conteneur DOM des filtres.
    * @returns {void}
    */
@@ -390,7 +467,7 @@ export class SearchComponent {
     });
 
     const activeBtn = container.querySelector(
-      `.type-btn[data-type="${this.filters.searchType}"]`
+      `.type-btn[data-type="${this.filters.searchType}"]`,
     );
     if (activeBtn) {
       activeBtn.style.background = "#ffffff";
@@ -399,8 +476,16 @@ export class SearchComponent {
     }
 
     const allSelects = container.querySelectorAll(".custom-select");
+    const specialLabels = [
+      "Etablissement non employeur",
+      "Non diffusé",
+      "Non renseigné",
+      "0 salarié",
+    ];
+
     allSelects.forEach((select) => {
       const trigger = select.querySelector(".select-trigger");
+
       trigger.addEventListener("click", (e) => {
         e.stopPropagation();
         allSelects.forEach((other) => {
@@ -408,19 +493,77 @@ export class SearchComponent {
         });
         select.classList.toggle("open");
       });
+
       select.querySelectorAll(".select-option").forEach((opt) => {
         opt.addEventListener("click", (e) => {
           e.stopPropagation();
           const val = opt.dataset.val;
           const type = opt.dataset.type;
-          if (type === "size" && val === "") this.filters.size = [];
-          else {
+
+          let isSelected = false;
+
+          if (type === "size" && val === "") {
+            this.filters.size = [];
+            isSelected = false;
+          } else if (type === "size" && val === "__SPECIAL_GROUP__") {
+            const options = this.dataManager.extractFilterOptions();
+            const specialValues = options.sizes.filter((s) =>
+              specialLabels.some((label) =>
+                s.toLowerCase().includes(label.toLowerCase()),
+              ),
+            );
+
+            const allSelected = specialValues.every((v) =>
+              this.filters.size.includes(v),
+            );
+
+            if (allSelected) {
+              this.filters.size = this.filters.size.filter(
+                (v) => !specialValues.includes(v),
+              );
+              isSelected = false;
+            } else {
+              specialValues.forEach((v) => {
+                if (!this.filters.size.includes(v)) this.filters.size.push(v);
+              });
+              isSelected = true;
+            }
+          } else {
             const targetArray =
               type === "sector" ? this.filters.sectors : this.filters.size;
+
             const index = targetArray.indexOf(val);
-            if (index === -1) targetArray.push(val);
-            else targetArray.splice(index, 1);
+            if (index === -1) {
+              targetArray.push(val);
+              isSelected = true;
+            } else {
+              targetArray.splice(index, 1);
+              isSelected = false;
+            }
           }
+
+          if (type === "size" && val === "") {
+            select.querySelectorAll(".select-option").forEach((o) => {
+              o.classList.remove("selected-opt");
+              const icon = o.querySelector("i");
+              if (icon) icon.remove();
+            });
+          } else {
+            if (isSelected) {
+              opt.classList.add("selected-opt");
+              if (!opt.querySelector("i")) {
+                opt.insertAdjacentHTML(
+                  "beforeend",
+                  '<i class="fas fa-check"></i>',
+                );
+              }
+            } else {
+              opt.classList.remove("selected-opt");
+              const icon = opt.querySelector("i");
+              if (icon) icon.remove();
+            }
+          }
+
           const targetArray =
             type === "sector" ? this.filters.sectors : this.filters.size;
           if (targetArray.length === 0) {
@@ -431,7 +574,7 @@ export class SearchComponent {
             trigger.textContent = `${targetArray.length} sélectionné(s)`;
             trigger.classList.add("selected");
           }
-          select.classList.remove("open");
+
           this.#applyFilters();
         });
       });
@@ -443,7 +586,6 @@ export class SearchComponent {
 
     radiusInput.addEventListener("input", (e) => {
       const val = parseInt(e.target.value);
-
       if (val >= 100) {
         radiusLabel.textContent = "Toute la France";
         radiusLabel.style.color = "#e74c3c";
@@ -453,10 +595,8 @@ export class SearchComponent {
         radiusLabel.style.color = "";
         this.mapManager.previewRadius(val);
       }
-
       this.element.classList.add("radius-active");
       filterSection.classList.add("is-radius-section");
-
       document.body.classList.remove("focus-mode");
       document.body.classList.add("radius-tuning");
       this.filters.radius = val;
@@ -465,36 +605,28 @@ export class SearchComponent {
 
     const onRadiusChange = () => {
       const val = parseInt(radiusInput.value);
-
       this.element.classList.remove("radius-active");
       filterSection.classList.remove("is-radius-section");
       document.body.classList.remove("radius-tuning");
-
       document.body.classList.add("focus-mode");
-
       this.mapManager.clearRadiusPreview();
-
       if (val >= 100) {
         this.mapManager.map.flyToBounds([
           [51.1, -5.2],
           [41.3, 9.6],
         ]);
       }
-
       this.filters.radius = val;
       this.#applyFilters();
     };
-
     radiusInput.addEventListener("change", onRadiusChange);
 
     const scoreInput = container.querySelector("#score-range");
     const scoreLabel = container.querySelector("#score-val");
-
     scoreInput.addEventListener("input", (e) => {
       const val = parseFloat(e.target.value);
       scoreLabel.textContent = val === 0 ? "Indifférent" : `${val}/5`;
     });
-
     scoreInput.addEventListener("change", (e) => {
       this.filters.score = parseFloat(e.target.value);
       this.#applyFilters();
@@ -508,7 +640,7 @@ export class SearchComponent {
           this.filters.transportModes.push(val);
         } else {
           this.filters.transportModes = this.filters.transportModes.filter(
-            (m) => m !== val
+            (m) => m !== val,
           );
         }
         this.#applyFilters();

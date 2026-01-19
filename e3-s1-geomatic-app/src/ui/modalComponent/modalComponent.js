@@ -1,18 +1,21 @@
-import { FavoritesManager } from "../../internal/managers/favoritesManager.js";
-
 /**
- * Composant responsable de l'affichage des fenêtres modales de l'application.
- * Gère deux types d'affichages : le détail d'une offre (avec itinéraire et favoris)
- * et la liste des offres d'une entreprise (via un overlay dédié).
- * * Dépendances :
- * @param {FavoritesManager} favManager - Gestionnaire des favoris pour gérer l'état des boutons.
+ * Composant gérant les fenêtres modales de l'application.
+ * Il est responsable de l'affichage détaillé d'une offre d'emploi (description,
+ * transports à proximité, bouton itinéraire) ainsi que de l'affichage d'une liste
+ * d'offres groupées pour une même entreprise.
+ * * Le constructeur initialise les conteneurs DOM, stocke les références vers les
+ * gestionnaires de favoris et de carte, et configure les callbacks d'interaction.
+ *
+ * @param {FavoritesManager} favManager - Instance gérant la persistance des favoris.
+ * @param {MapManager} mapManager - Instance gérant la carte (utilisée pour vérifier la position utilisateur).
  */
 export class ModalComponent {
-  constructor(favManager) {
+  constructor(favManager, mapManager) {
     this.parent = document.body;
     this.container = null;
     this.currentOffer = null;
     this.favManager = favManager;
+    this.mapManager = mapManager;
 
     this.onShowStationsOnMap = null;
     this.onItineraryCallback = null;
@@ -21,9 +24,8 @@ export class ModalComponent {
   }
 
   /**
-   * Initialise le conteneur principal de la modale de détail et l'injecte dans le DOM.
-   * Configure la fermeture au clic sur l'arrière-plan.
-   * @returns {void}
+   * Initialise le squelette HTML de la modale principale, l'injecte dans le document
+   * et configure la fermeture automatique lors d'un clic sur l'overlay (fond sombre).
    */
   init() {
     this.container = document.createElement("div");
@@ -38,17 +40,19 @@ export class ModalComponent {
   }
 
   /**
-   * Masque la modale de détail et réactive le défilement de la page principale.
-   * @returns {void}
+   * Masque la modale de détail, réinitialise le défilement (scroll) du corps de la page
+   * et met à jour les classes CSS pour l'animation de sortie.
    */
   hide() {
+    this.container.classList.remove("hidden");
+
     this.container.classList.add("hidden");
     document.body.style.overflow = "";
   }
 
   /**
-   * Affiche la modale de détail et bloque le défilement de la page principale.
-   * @returns {void}
+   * Affiche la modale principale et bloque le défilement de l'arrière-plan (body)
+   * pour une meilleure expérience utilisateur sur mobile et desktop.
    */
   show() {
     this.container.classList.remove("hidden");
@@ -56,22 +60,32 @@ export class ModalComponent {
   }
 
   /**
-   * Ouvre la modale en mode "Détail" pour afficher une offre spécifique.
-   * Injecte les informations de l'offre, de l'entreprise et les boutons d'action.
-   * @param {Object} offer - Les données de l'offre d'emploi.
-   * @param {Object} companyInfo - Les informations de l'entreprise (nom, secteur, etc.).
-   * @param {Array<Object>} stations - Liste des stations de transport à proximité (optionnel).
-   * @returns {void}
+   * Prépare et ouvre la vue détaillée d'une offre d'emploi spécifique.
+   * Cette méthode :
+   * - Fusionne les données de l'offre et de l'entreprise.
+   * - Vérifie la disponibilité de la position utilisateur pour activer/désactiver le bouton itinéraire.
+   * - Génère le header et le footer de la modale avec les boutons d'action (Postuler, Itinéraire, Favori).
+   * - Déclenche le rendu du corps du message et la gestion des événements.
+   * * @param {Object} offer - L'objet contenant les données de l'offre d'emploi.
+   * @param {Object} companyInfo - Informations complémentaires sur l'entreprise (nom, secteur).
+   * @param {Array} [stations=[]] - Liste des stations de transport à proximité trouvées.
    */
   openOfferDetail(offer, companyInfo, stations = []) {
-    this.currentOffer = {
-      ...offer,
-      ...(companyInfo || {}),
-    };
+    this.currentOffer = { ...offer, ...(companyInfo || {}) };
     const companyName =
       this.currentOffer.company || offer.companyName || "Entreprise";
-
     const contentBox = this.container.querySelector("#modal-content-box");
+
+    const hasLocation =
+      this.mapManager &&
+      this.mapManager.userPosition &&
+      this.mapManager.userPosition.lat;
+
+    const btnDisabledClass = hasLocation ? "" : "disabled-btn";
+    const btnDisabledAttr = hasLocation ? "" : "disabled";
+    const btnTitle = hasLocation
+      ? "Calculer l'itinéraire"
+      : "Activez votre localisation pour calculer un itinéraire";
 
     contentBox.innerHTML = `
       <div class="modal-header detail-mode">
@@ -81,19 +95,16 @@ export class ModalComponent {
           </div>
           <button class="modal-close-btn"><i class="fas fa-times"></i></button>
       </div>
-
-      <div class="modal-body-scroll" id="modal-dynamic-body">
-        </div>
-
+      <div class="modal-body-scroll" id="modal-dynamic-body"></div>
       <div class="modal-footer-grid">
-          <a href="${
-            offer.applyUrl || "#"
-          }" target="_blank" class="footer-btn btn-apply">
+          <a href="${offer.applyUrl || "#"}" target="_blank" class="footer-btn btn-apply">
               <i class="fas fa-paper-plane"></i> Postuler
           </a>
-          <button class="footer-btn btn-route" title="Calculer l'itinéraire">
+          
+          <button class="footer-btn btn-route ${btnDisabledClass}" title="${btnTitle}" ${btnDisabledAttr}>
               <i class="fas fa-route"></i> Itinéraire
           </button>
+          
           <button class="footer-btn btn-fav" id="footer-fav-btn">
               <i class="far fa-heart"></i> <span>Favori</span>
           </button>
@@ -111,49 +122,45 @@ export class ModalComponent {
       .addEventListener("click", () => this.hide());
 
     this.#renderDetailBody(offer, stations);
-
     this.#setupFooterEvents();
     this.#updateFavoriteBtnState();
     this.show();
   }
 
   /**
-   * Méthode privée. Génère le contenu HTML du corps de la modale détail.
-   * Inclut les tags, la description et la liste des transports à proximité.
-   * @param {Object} offer - L'offre à afficher.
-   * @param {Array<Object>} stations - Les stations de transport.
-   * @returns {void}
+   * Méthode privée.
+   * Génère le contenu dynamique du corps de la modale :
+   * - Badges d'informations (type de contrat, date, diplôme).
+   * - Bloc de description formaté.
+   * - Liste des stations de transport avec icônes adaptées (Métro, Bus, Train) et distances.
+   * - Bouton de visualisation des stations sur la carte.
+   * * @param {Object} offer - Données de l'offre.
+   * @param {Array} stations - Liste des stations à afficher.
    * @private
    */
   #renderDetailBody(offer, stations) {
     const body = this.container.querySelector("#modal-dynamic-body");
-
     let contractText = Array.isArray(offer.contractType)
       ? offer.contractType.join(" / ")
       : offer.contractType || "Non spécifié";
-
     let dateHtml = offer.contractStart
-      ? `<span class="info-pill highlight-pill"><i class="far fa-calendar-alt"></i> ${
-          offer.contractStart.split("T")[0]
-        }</span>`
+      ? `<span class="info-pill highlight-pill"><i class="far fa-calendar-alt"></i> ${offer.contractStart.split("T")[0]}</span>`
       : "";
     let diplomaHtml = offer.targetDiploma?.label
       ? `<span class="info-pill"><i class="fas fa-graduation-cap"></i> ${offer.targetDiploma.label}</span>`
       : "";
 
     let stationsHtml = "";
-
     if (stations && stations.length > 0) {
       const listItems = stations
         .map((st) => {
           const modes = st.modes || [];
           let mainIconClass = "fas fa-bus";
-
           if (
             modes.some(
               (m) =>
                 m.toUpperCase().includes("TRAIN") ||
-                m.toUpperCase().includes("RER")
+                m.toUpperCase().includes("RER"),
             )
           )
             mainIconClass = "fas fa-train";
@@ -164,19 +171,16 @@ export class ModalComponent {
 
           const pillsHtml = modes
             .map(
-              (m) => `<span class="mode-pill ${m.toLowerCase()}">${m}</span>`
+              (m) => `<span class="mode-pill ${m.toLowerCase()}">${m}</span>`,
             )
             .join("");
-
           return `
                 <div class="station-item">
                     <div class="station-icon"><i class="${mainIconClass}"></i></div>
                     <div class="station-content">
                         <div class="station-header">
                             <strong>${st.name || "Arrêt inconnu"}</strong>
-                            <span class="station-dist">${Math.round(
-                              st.distance
-                            )}m</span>
+                            <span class="station-dist">${Math.round(st.distance)}m</span>
                         </div>
                         <div class="station-modes">${pillsHtml}</div>
                     </div>
@@ -213,9 +217,7 @@ export class ModalComponent {
         </div>
         <div class="detail-section">
             <h3 class="section-title">Description du poste</h3>
-            <div class="formatted-text">${
-              offer.offerDescription || "Non spécifiée."
-            }</div>
+            <div class="formatted-text">${offer.offerDescription || "Non spécifiée."}</div>
         </div>
         ${stationsHtml}
       `;
@@ -232,21 +234,21 @@ export class ModalComponent {
   }
 
   /**
-   * Crée et affiche une liste d'offres pour une entreprise donnée.
-   * Cette méthode génère un overlay DOM indépendant pour éviter les conflits avec la modale de détail.
-   * @param {Object} companyData - Les données de l'entreprise.
-   * @param {Array<Object>} offers - La liste des offres disponibles.
-   * @param {Function} onSelectOffer - Callback exécuté lors du clic sur une offre de la liste.
-   * @returns {void}
+   * Crée et affiche une liste d'offres pour une entreprise donnée dans un overlay indépendant.
+   * Utilisé lorsqu'un marqueur sur la carte contient plusieurs offres.
+   * Gère sa propre animation de sortie (fade-out) et permet de basculer vers le détail
+   * d'une offre spécifique via un callback.
+   *
+   * @param {Object} companyData - Données globales de l'entreprise.
+   * @param {Array<Object>} offers - Tableau des offres d'emploi associées.
+   * @param {Function} onSelectOffer - Fonction appelée lorsqu'une offre de la liste est cliquée.
    */
   openOfferList(companyData, offers, onSelectOffer) {
     const existingModal = document.getElementById("olm-modal-overlay");
     if (existingModal) existingModal.remove();
-
     const overlay = document.createElement("div");
     overlay.id = "olm-modal-overlay";
     overlay.className = "olm-overlay";
-
     const s = offers.length > 1 ? "s" : "";
     let sectorHtml = "";
     if (companyData.sector) {
@@ -255,7 +257,6 @@ export class ModalComponent {
         sectorHtml = `<span class="olm-sector">${sec}</span>`;
       }
     }
-
     overlay.innerHTML = `
       <div class="olm-content">
         <div class="olm-header">
@@ -272,7 +273,6 @@ export class ModalComponent {
             </div>
             <button class="olm-close-btn"><i class="fas fa-times"></i></button>
         </div>
-
         <div class="olm-body">
             <div class="olm-list-container">
                 ${offers
@@ -294,14 +294,13 @@ export class ModalComponent {
             </div>
         </div>
       </div>
+
     `;
 
     document.body.appendChild(overlay);
     document.body.style.overflow = "hidden";
-
     const closeModal = (keepScroll = false) => {
       overlay.classList.add("fade-out");
-
       setTimeout(() => {
         overlay.remove();
         if (!keepScroll) {
@@ -309,11 +308,9 @@ export class ModalComponent {
         }
       }, 200);
     };
-
     overlay
       .querySelector(".olm-close-btn")
       .addEventListener("click", () => closeModal(false));
-
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) closeModal(false);
     });
@@ -322,7 +319,6 @@ export class ModalComponent {
       el.addEventListener("click", () => {
         const index = el.dataset.index;
         closeModal(true);
-
         setTimeout(() => {
           onSelectOffer(offers[index]);
         }, 150);
@@ -331,9 +327,10 @@ export class ModalComponent {
   }
 
   /**
-   * Méthode privée. Configure les événements des boutons du footer de la modale détail
-   * (Calcul d'itinéraire, Ajout/Retrait favori).
-   * @returns {void}
+   * Méthode privée.
+   * Attache les écouteurs d'événements aux boutons du pied de page de la modale.
+   * Gère la sécurité du bouton itinéraire (vérification du statut désactivé) et
+   * la logique d'ajout/suppression des favoris au clic.
    * @private
    */
   #setupFooterEvents() {
@@ -342,7 +339,13 @@ export class ModalComponent {
       const newBtn = routeBtn.cloneNode(true);
       routeBtn.parentNode.replaceChild(newBtn, routeBtn);
 
-      newBtn.addEventListener("click", () => {
+      newBtn.addEventListener("click", (e) => {
+        if (newBtn.disabled || newBtn.classList.contains("disabled-btn")) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
         if (this.onItineraryCallback && this.currentOffer) {
           this.hide();
           this.onItineraryCallback(this.currentOffer);
@@ -364,9 +367,9 @@ export class ModalComponent {
   }
 
   /**
-   * Méthode privée. Met à jour l'apparence du bouton favori (cœur plein/vide, texte)
-   * en fonction de l'état de l'offre courante dans le FavoritesManager.
-   * @returns {void}
+   * Méthode privée.
+   * Synchronise l'aspect visuel du bouton favori de la modale avec l'état réel
+   * présent dans le FavManager. Modifie l'icône, la couleur et le texte (Favori / Retiré).
    * @private
    */
   #updateFavoriteBtnState() {
@@ -387,9 +390,9 @@ export class ModalComponent {
   }
 
   /**
-   * Définit le callback à exécuter lorsque l'utilisateur clique sur le bouton "Itinéraire".
-   * @param {Function} callback - La fonction de callback.
-   * @returns {void}
+   * Définit le callback à appeler lorsque l'utilisateur demande le calcul
+   * d'un itinéraire vers l'offre affichée.
+   * @param {Function} callback - Fonction recevant l'offre sélectionnée en paramètre.
    */
   setOnItineraryClick(callback) {
     this.onItineraryCallback = callback;
