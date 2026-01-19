@@ -76,6 +76,11 @@
 .res-export-menu {
   position: relative;
   margin-right: 15px;
+  display: none;
+}
+
+.results-widget.expanded .res-export-menu {
+  display: block;
 }
 
 /* Bouton d'export */

@@ -315,7 +315,7 @@ export class ResultsComponent {
  async #exportResults(format) {
    if (this.allCompanies.length === 0) return;
 
-   // Préparer les données - inclure le nom de l'entreprise, le nom de l'offre et le lien de candidature
+   // Préparer les données - inclure le nom de l'entreprise, le nom de l'offre et l'URL de candidature
    const exportData = [];
    
    // Parcourir toutes les entreprises
@@ -329,7 +329,7 @@ export class ResultsComponent {
          exportData.push({
            companyName: company.company,
            offerName: offer.title,
-           applyLink: offer.applyUrl || ''
+           applyUrl: offer.applyUrl || ''
          });
        }
      } catch (error) {
@@ -342,7 +342,11 @@ export class ResultsComponent {
 
    switch (format) {
      case 'txt':
-       content = exportData.map(item => `${item.companyName} : ${item.offerName} : ${item.applyLink}`).join('\n');
+       content = exportData.map(item =>
+         `Nom de l'entreprise : ${item.companyName}\n` +
+         `Nom de l'offre : ${item.offerName}\n` +
+         `Url pour postuler : ${item.applyUrl}\n`
+       ).join('\n');
        mimeType = 'text/plain';
        extension = 'txt';
        break;
@@ -352,8 +356,8 @@ export class ResultsComponent {
        extension = 'json';
        break;
      case 'csv':
-       const headers = ['Nom de l\'entreprise', 'Nom de l\'offre', 'Lien pour postuler'];
-       const rows = exportData.map(item => `"${item.companyName.replace(/"/g, '""')}","${item.offerName.replace(/"/g, '""')}","${item.applyLink.replace(/"/g, '""')}"`);
+       const headers = ['companyName', 'offerName', 'applyUrl'];
+       const rows = exportData.map(item => `"${item.companyName.replace(/"/g, '""')}","${item.offerName.replace(/"/g, '""')}","${item.applyUrl.replace(/"/g, '""')}"`);
        content = [headers.join(','), ...rows].join('\n');
        mimeType = 'text/csv';
        extension = 'csv';
