@@ -37,6 +37,18 @@ export class NavigationComponent {
         `;
 
     this.parent.appendChild(this.element);
+
+    const centerBtn = this.element.querySelector(".btn-center");
+
+    const hasPosition =
+      this.mapManager.userPosition && this.mapManager.userPosition.lat;
+
+    if (!hasPosition) {
+      centerBtn.classList.add("disabled-nav-btn");
+
+      centerBtn.title = "Localisation non disponible";
+    }
+
     this.#setupEvents();
   }
 
@@ -70,6 +82,48 @@ export class NavigationComponent {
         e.stopPropagation();
         this.mapManager.recenterOnUser();
       });
+    }
+  }
+
+  /**
+   * Masque le widget de navigation en lui ajoutant la classe CSS de dissimulation.
+   * Cette méthode est utilisée pour libérer de l'espace visuel lors de certains
+   * modes d'interface (comme le mode itinéraire ou plein écran).
+   */
+  hide() {
+    if (this.element) this.element.classList.add("widget-hidden");
+  }
+
+  /**
+   * Rend le widget de navigation visible en retirant la classe CSS de dissimulation.
+   * Déclenche également une mise à jour de l'état du bouton central (`updateButtonState`)
+   * pour s'assurer que l'interactivité reflète la disponibilité actuelle de la position utilisateur.
+   */
+  show() {
+    if (this.element) this.element.classList.remove("widget-hidden");
+
+    this.updateButtonState();
+  }
+
+  /**
+   * Actualise l'état interactif et visuel du bouton de recentrage central.
+   * Vérifie auprès du MapManager si des coordonnées utilisateur valides sont disponibles.
+   * Si la position est absente, le bouton est désactivé (classe `disabled-nav-btn` et attribut disabled).
+   * Si la position est présente, le bouton est réactivé.
+   */
+  updateButtonState() {
+    const centerBtn = this.element.querySelector(".btn-center");
+    if (!centerBtn) return;
+
+    const hasPosition =
+      this.mapManager.userPosition && this.mapManager.userPosition.lat;
+
+    if (hasPosition) {
+      centerBtn.classList.remove("disabled-nav-btn");
+      centerBtn.disabled = false;
+    } else {
+      centerBtn.classList.add("disabled-nav-btn");
+      centerBtn.disabled = true;
     }
   }
 }

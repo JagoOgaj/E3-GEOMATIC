@@ -56,54 +56,6 @@ async function preloadResources() {
 }
 
 /**
- * Vérifie la disponibilité de la géolocalisation et force l'utilisateur à l'accepter pour continuer.
- * Met à jour le texte du loader pour guider l'utilisateur.
- * Rejette la promesse si la géolocalisation est refusée ou indisponible.
- * @returns {Promise<Object>} La position géographique (GeolocationPosition).
- */
-async function waitForGeolocation() {
-  const statusText = document.getElementById("loader-status");
-  const detailText = document.getElementById("loader-detail");
-  const progressBar = document.getElementById("loader-progress");
-
-  if (statusText) statusText.textContent = "Géolocalisation requise";
-  if (detailText) {
-    detailText.textContent = "Veuillez autoriser l'accès à votre position...";
-    detailText.style.color = "#f1c40f";
-  }
-  if (progressBar) {
-    progressBar.style.width = "100%";
-    progressBar.style.background = "#f1c40f";
-  }
-
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject("Géolocalisation non supportée par ce navigateur.");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        if (detailText) {
-          detailText.style.color = "#2ecc71";
-          detailText.textContent = "Position trouvée !";
-        }
-        wait(800).then(() => resolve(position));
-      },
-      (error) => {
-        let msg = "Erreur inconnue.";
-        if (error.code === 1) msg = "Vous avez refusé la géolocalisation.";
-        else if (error.code === 2) msg = "Position indisponible.";
-        else if (error.code === 3) msg = "Délai d'attente dépassé.";
-
-        reject(msg);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  });
-}
-
-/**
  * Point d'entrée principal de l'application (IIFE).
  * Orchestre le chargement, l'initialisation des managers et la gestion des événements globaux.
  */
@@ -114,8 +66,6 @@ async function waitForGeolocation() {
 
   try {
     await preloadResources();
-
-    await waitForGeolocation();
 
     if (statusText) statusText.textContent = "Initialisation de la carte...";
     await wait(500);
@@ -131,6 +81,7 @@ async function waitForGeolocation() {
 
     const uiManager = new UIManager(mapManager, favManager, dataManager);
     uiManager.init();
+    uiManager.userLocationComponent.updateButtonState();
 
     mapManager.resultComponent = uiManager.resultsComponent;
 
@@ -143,7 +94,7 @@ async function waitForGeolocation() {
 
     mapManager.addCompanyMarkers(geoJson, async (companyProps) => {
       const offers = await dataManager.getOffersByStorageId(
-        companyProps.storage_id
+        companyProps.storage_id,
       );
       if (offers.length === 0) {
         alert("Aucune offre détaillée trouvée pour cette entreprise.");
@@ -155,20 +106,20 @@ async function waitForGeolocation() {
         offers,
         async (selectedOffer) => {
           const stations = await dataManager.getStationsForCompany(
-            companyProps.storage_id
+            companyProps.storage_id,
           );
           uiManager.jobModal.openOfferDetail(
             selectedOffer,
             companyProps,
-            stations
+            stations,
           );
-        }
+        },
       );
     });
 
     uiManager.searchComponent.setOnMarkerClick(async (companyProps) => {
       const offers = await dataManager.getOffersByStorageId(
-        companyProps.storage_id
+        companyProps.storage_id,
       );
       if (offers.length === 0) {
         alert("Pas d'offre détaillée.");
@@ -179,14 +130,14 @@ async function waitForGeolocation() {
         offers,
         async (selectedOffer) => {
           const stations = await dataManager.getStationsForCompany(
-            companyProps.storage_id
+            companyProps.storage_id,
           );
           uiManager.jobModal.openOfferDetail(
             selectedOffer,
             companyProps,
-            stations
+            stations,
           );
-        }
+        },
       );
     });
 
@@ -194,7 +145,7 @@ async function waitForGeolocation() {
       const offer = favManager.getFavorites().find((fav) => fav.id === id);
       if (offer) {
         const stations = await dataManager.getStationsForCompany(
-          offer.storage_id
+          offer.storage_id,
         );
         uiManager.jobModal.openOfferDetail(offer, offer.company, stations);
       }
@@ -216,13 +167,25 @@ async function waitForGeolocation() {
         uiManager.resultsComponent?.element,
         document.getElementById("btn-close-route"),
       ];
+
       widgetsToToggle.forEach((el) => {
         if (el) {
           if (isItineraryMode) el.classList.add("widget-hidden");
           else el.classList.remove("widget-hidden");
         }
       });
+
       if (isItineraryMode && uiManager.jobModal) uiManager.jobModal.hide();
+
+      if (uiManager.userLocationComponent) {
+        if (isItineraryMode) {
+          uiManager.userLocationComponent.hide();
+        } else {
+          uiManager.userLocationComponent.show();
+          if (uiManager.navComponent)
+            uiManager.navComponent.updateButtonState();
+        }
+      }
     };
 
     const exitItinerary = () => {

@@ -619,3 +619,16 @@
     max-height: 80vh;
   }
 }
+
+.footer-btn:disabled,
+.footer-btn.disabled-btn {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(1);
+  background-color: #e0e0e0 !important;
+  color: #9e9e9e !important;
+  box-shadow: none !important;
+  transform: none !important;
+
+  pointer-events: none;
+}

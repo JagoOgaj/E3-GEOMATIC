@@ -35,6 +35,17 @@ export class FavoritesComponent {
             <span class="fav-title">Mes Favoris (<span id="fav-count">0</span>)</span>
             
             <div class="header-actions">
+                <!-- Bouton d'export avec menu déroulant -->
+                <div class="fav-export-menu">
+                    <button class="btn-export" title="Exporter les favoris">
+                        <i class="fas fa-download"></i> Exporter
+                    </button>
+                    <div class="fav-export-dropdown">
+                        <button class="export-option" data-format="txt">Format texte (.txt)</button>
+                        <button class="export-option" data-format="json">JSON</button>
+                        <button class="export-option" data-format="csv">CSV</button>
+                    </div>
+                </div>
                 <button class="fav-close-btn"><i class="fas fa-times"></i></button>
             </div>
         </div>
@@ -68,13 +79,97 @@ export class FavoritesComponent {
       if (e.target.closest('.fav-close-btn')) return;
 
       if (!this.isExpanded) this.expand();
-      else this.collapse(); 
+      else this.collapse();
     });
 
     closeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       this.collapse();
     });
+
+    // Fonctionnalité du bouton d'export
+    const exportBtn = this.element.querySelector('.btn-export');
+    const exportMenu = this.element.querySelector('.fav-export-menu');
+    const exportOptions = this.element.querySelectorAll('.export-option');
+
+    // Afficher/masquer le menu d'export lors du clic sur le bouton
+    exportBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      exportMenu.classList.toggle('active');
+    });
+
+    // Gérer les clics sur les options d'export
+    exportOptions.forEach(option => {
+      option.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const format = e.target.dataset.format;
+        this.#exportFavorites(format);
+        exportMenu.classList.remove('active');
+      });
+    });
+
+    // Fermer le menu d'export lorsqu'on clique ailleurs
+    document.addEventListener('click', (e) => {
+      if (exportMenu && !exportMenu.contains(e.target)) {
+        exportMenu.classList.remove('active');
+      }
+    });
+  }
+
+  /**
+   * Exporte les favoris dans le format spécifié
+   * @param {string} format - Le format d'export ('txt', 'json', ou 'csv')
+   * @private
+   */
+  #exportFavorites(format) {
+    const favorites = this.favManager.getFavorites();
+    
+    if (favorites.length === 0) return;
+
+    let content, mimeType, extension;
+
+    switch (format) {
+      case 'txt':
+        content = favorites.map(fav =>
+          `Nom de l'entreprise : ${fav.company}\n` +
+          `Nom de l'offre : ${fav.title}\n` +
+          `Url pour postuler : ${fav.applyUrl}\n`
+        ).join('\n');
+        mimeType = 'text/plain';
+        extension = 'txt';
+        break;
+      case 'json':
+        // Préparer les données avec les mêmes noms de champs que dans le composant de résultats
+        const exportData = favorites.map(fav => ({
+          companyName: fav.company,
+          offerName: fav.title,
+          applyUrl: fav.applyUrl
+        }));
+        content = JSON.stringify(exportData, null, 2);
+        mimeType = 'application/json';
+        extension = 'json';
+        break;
+      case 'csv':
+        const headers = ['companyName', 'offerName', 'applyUrl'];
+        const rows = favorites.map(fav => `"${fav.company.replace(/"/g, '""')}","${fav.title.replace(/"/g, '""')}","${fav.applyUrl.replace(/"/g, '""')}"`);
+        content = [headers.join(','), ...rows].join('\n');
+        mimeType = 'text/csv';
+        extension = 'csv';
+        break;
+      default:
+        return;
+    }
+
+    // Déclencher le téléchargement du fichier
+    const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `favoris.${extension}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
   /**
