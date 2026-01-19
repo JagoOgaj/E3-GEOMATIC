@@ -113,7 +113,7 @@ Coordonne les différents composants UI :
 - **Persistance LocalStorage** : Stockage côté client avec clé `geojob_favorites`
 - **Pattern Observer** : Notification automatique des composants abonnés lors des changements
 - **Normalisation des données** : Uniformisation des structures pour garantir la cohérence
-- **Export des favoris**
+- **Export des favoris** : Possibilité d'exporter la liste des favoris au format TXT, JSON ou CSV
 
 ### ResultsComponent : Liste des résultats
 Affichage des résultats de recherche :
@@ -125,6 +125,18 @@ Affichage des résultats de recherche :
 - **Pagination infinie** : Chargement par lots de 25 entreprises avec IntersectionObserver
 - **Accordéon dynamique** : Chargement lazy des offres au clic sur l'entreprise
 - **Mise à jour en temps réel** : Synchronisation avec les favoris
+- **Export des résultats** : Possibilité d'exporter les résultats de recherche au format TXT, JSON ou CSV
+
+### Fonctionnalité d'export
+L'application offre la possibilité d'exporter les offres d'emploi trouvées dans deux composants différents :
+- **ResultsComponent** : Export des résultats de recherche
+- **FavoritesComponent** : Export des offres favorites
+
+#### Formats d'export disponibles
+Trois formats d'export sont disponibles pour les deux composants :
+- **Format texte (.txt)** : Fichier texte contenant les différentes offres avec nom de l'entreprise, nom de l'offre et URL de candidature, séparées par des sauts de ligne
+- **JSON** : Fichier JSON contenant un tableau d'objets avec les propriétés `companyName`, `offerName` et `applyUrl`
+- **CSV** : Fichier CSV avec en-têtes `companyName`, `offerName` et `applyUrl`
 
 ### ModalComponent : Système de modales
 **Deux modes d'affichage** :
