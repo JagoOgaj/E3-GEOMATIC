@@ -48,9 +48,20 @@ export class ResultsComponent {
                 <span class="res-title">Résultats</span>
                 <span class="res-subtitle">En attente de recherche...</span>
             </div>
+            <!-- Bouton d'export avec menu déroulant -->
+            <div class="res-export-menu">
+                <button class="res-export-btn" title="Exporter les résultats">
+                    <i class="fas fa-download"></i>
+                </button>
+                <div class="res-export-dropdown">
+                    <button class="export-option" data-format="txt">Format texte (.txt)</button>
+                    <button class="export-option" data-format="json">JSON</button>
+                    <button class="export-option" data-format="csv">CSV</button>
+                </div>
+            </div>
             <div class="res-toggle-icon"><i class="fas fa-chevron-up"></i></div>
         </div>
-        <div class="res-content"></div> 
+        <div class="res-content"></div>
     `;
 
     this.parent.appendChild(this.element);
@@ -266,7 +277,102 @@ export class ResultsComponent {
         }
       }
     });
-  }
+
+   // Fonctionnalité du bouton d'export
+   const exportBtn = this.element.querySelector('.res-export-btn');
+   const exportMenu = this.element.querySelector('.res-export-menu');
+   const exportOptions = this.element.querySelectorAll('.export-option');
+
+   // Afficher/masquer le menu d'export lors du clic sur le bouton
+   exportBtn.addEventListener('click', (e) => {
+     e.stopPropagation();
+     exportMenu.classList.toggle('active');
+   });
+
+   // Gérer les clics sur les options d'export
+   exportOptions.forEach(option => {
+     option.addEventListener('click', async (e) => {
+       e.stopPropagation();
+       const format = e.target.dataset.format;
+       await this.#exportResults(format);
+       exportMenu.classList.remove('active');
+     });
+   });
+
+   // Fermer le menu d'export lorsqu'on clique ailleurs
+   document.addEventListener('click', (e) => {
+     if (!exportMenu.contains(e.target)) {
+       exportMenu.classList.remove('active');
+     }
+   });
+ }
+
+ /**
+  * Exporte les résultats dans le format spécifié
+  * @param {string} format - Le format d'export ('txt', 'json', ou 'csv')
+  * @private
+  */
+ async #exportResults(format) {
+   if (this.allCompanies.length === 0) return;
+
+   // Préparer les données - inclure le nom de l'entreprise, le nom de l'offre et le lien de candidature
+   const exportData = [];
+   
+   // Parcourir toutes les entreprises
+   for (const company of this.allCompanies) {
+     try {
+       // Récupérer les offres pour cette entreprise
+       const offers = await this.dataManager.getOffersByStorageId(company.storage_id);
+       
+       // Pour chaque offre, ajouter une entrée dans les données d'export
+       for (const offer of offers) {
+         exportData.push({
+           companyName: company.company,
+           offerName: offer.title,
+           applyLink: offer.applyUrl || ''
+         });
+       }
+     } catch (error) {
+       console.error(`Erreur lors de la récupération des offres pour ${company.company}:`, error);
+       // Continuer avec les autres entreprises même si une erreur se produit
+     }
+   }
+
+   let content, mimeType, extension;
+
+   switch (format) {
+     case 'txt':
+       content = exportData.map(item => `${item.companyName} : ${item.offerName} : ${item.applyLink}`).join('\n');
+       mimeType = 'text/plain';
+       extension = 'txt';
+       break;
+     case 'json':
+       content = JSON.stringify(exportData, null, 2);
+       mimeType = 'application/json';
+       extension = 'json';
+       break;
+     case 'csv':
+       const headers = ['Nom de l\'entreprise', 'Nom de l\'offre', 'Lien pour postuler'];
+       const rows = exportData.map(item => `"${item.companyName.replace(/"/g, '""')}","${item.offerName.replace(/"/g, '""')}","${item.applyLink.replace(/"/g, '""')}"`);
+       content = [headers.join(','), ...rows].join('\n');
+       mimeType = 'text/csv';
+       extension = 'csv';
+       break;
+     default:
+       return;
+   }
+
+   // Déclencher le téléchargement du fichier
+   const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
+   const url = URL.createObjectURL(blob);
+   const link = document.createElement('a');
+   link.href = url;
+   link.download = `resultats-recherche.${extension}`;
+   document.body.appendChild(link);
+   link.click();
+   document.body.removeChild(link);
+   URL.revokeObjectURL(url);
+ }
 
   /**
    * Méthode privée. Charge les données détaillées des offres pour une entreprise

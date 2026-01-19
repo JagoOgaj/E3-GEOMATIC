@@ -72,6 +72,76 @@
   margin-top: 2px;
 }
 
+/* Conteneur du menu d'export */
+.res-export-menu {
+  position: relative;
+  margin-right: 15px;
+}
+
+/* Bouton d'export */
+.res-export-btn {
+  background: #f1f3f5;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7f8c8d;
+  transition: all 0.2s ease;
+}
+
+.res-export-btn:hover {
+  background: #3498db;
+  color: white;
+}
+
+/* Menu déroulant d'export */
+.res-export-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 8px 0;
+  min-width: 180px;
+  display: none;
+  z-index: 1001;
+}
+
+.res-export-menu.active .res-export-dropdown {
+  display: block;
+}
+
+/* Options du menu d'export */
+.export-option {
+  display: block;
+  width: 100%;
+  padding: 10px 15px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #2c3e50;
+  transition: background 0.2s;
+}
+
+.export-option:hover {
+  background: #f8f9fa;
+}
+
+.export-option:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.export-option:last-child {
+  border-radius: 0 0 8px 8px;
+}
+
 .res-toggle-icon {
   color: #b2bec3;
   transition: transform 0.4s;
