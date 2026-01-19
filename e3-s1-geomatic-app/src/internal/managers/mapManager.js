@@ -201,6 +201,7 @@ export class MapManager {
       const modes = st.modes || [];
       const lat = st.lat || (st.geometry ? st.geometry.coordinates[1] : 0);
       const lon = st.lon || (st.geometry ? st.geometry.coordinates[0] : 0);
+
       let iconClass = "fa-bus";
       let bgColor = "#3498db";
       let typeLabel = "Arrêt de Bus";
@@ -308,6 +309,21 @@ export class MapManager {
   }
 
   /**
+   * Retourne la couleur associée à un type de transport donné.
+   * @param {string} type - Le type de transport (ex: 'METRO', 'BUS').
+   * @returns {string} Le code couleur hexadécimal.
+   */
+  getTransportColor(type) {
+    if (!type) return "#7f8c8d";
+    const t = type.toUpperCase();
+    if (t.includes("METRO")) return "#27ae60";
+    if (t.includes("BUS")) return "#2980b9";
+    if (t.includes("TRAM")) return "#8e44ad";
+    if (t.includes("TRAIN") || t.includes("RER")) return "#e67e22";
+    if (t.includes("WALK") || t.includes("MARCHE")) return "#95a5a6";
+    return "#3498db";
+  }
+  /**
    * Dessine un itinéraire détaillé avec des segments colorés par mode de transport.
    * Ajoute des popups riches sur les points d'étape et gère la marche d'approche.
    * @param {Object} pathData - Les données du chemin calculé.
@@ -363,7 +379,6 @@ export class MapManager {
 
       bounds.extend(p1);
       bounds.extend(p2);
-
       const color = this.getTransportColor(end.type);
 
       const segment = L.polyline([p1, p2], {
@@ -381,6 +396,7 @@ export class MapManager {
     path.forEach((step) => {
       const latlng = [step.lat, step.lon];
 
+      // Point de DÉPART
       if (step.type === "DEPART") {
         L.marker(latlng, {
           icon: L.divIcon({
@@ -447,7 +463,6 @@ export class MapManager {
       icon: endIcon,
       zIndexOffset: 1000,
     }).addTo(this.routeLayer);
-
     this.map.fitBounds(bounds, { padding: [50, 50] });
   }
 
@@ -518,6 +533,7 @@ export class MapManager {
    */
   updateLoupe(latlng) {
     if (this.loupeMap) {
+      // Zoom fixe élevé (ex: 16) pour effet "loupe"
       this.loupeMap.setView(latlng, 16, { animate: false });
     }
   }
@@ -578,25 +594,5 @@ export class MapManager {
         this.map.addLayer(this.markersLayer);
     }
     if (this.userMarker) this.userMarker.addTo(this.map);
-  }
-
-  /**
-   * Retourne la couleur hexadécimale associée à un mode de transport spécifique.
-   * La logique de correspondance est basée sur des mots-clés (METRO, BUS, TRAM, etc.)
-   * et suit un code couleur standardisé (ex: vert pour métro, bleu pour bus).
-   * * @param {string} type - Le type ou le mode de transport (ex: "METRO", "Marche").
-   * @returns {string} Le code couleur hexadécimal correspondant.
-   */
-  getTransportColor(type) {
-    if (!type) return "#7f8c8d";
-    const t = type.toUpperCase();
-
-    if (t.includes("METRO")) return "#27ae60";
-    if (t.includes("BUS")) return "#2980b9";
-    if (t.includes("TRAM")) return "#8e44ad";
-    if (t.includes("TRAIN") || t.includes("RER")) return "#e67e22";
-    if (t.includes("WALK") || t.includes("MARCHE")) return "#95a5a6";
-
-    return "#3498db";
   }
 }

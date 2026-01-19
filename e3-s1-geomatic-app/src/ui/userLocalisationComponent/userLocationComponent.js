@@ -36,39 +36,24 @@ export class UserLocationComponent {
   render() {
     this.container = document.createElement("div");
     this.container.className = "location-controls-container";
-
     this.gpsBtn = document.createElement("button");
     this.gpsBtn.className = "gps-btn";
     this.gpsBtn.innerHTML = '<i class="fas fa-crosshairs"></i>';
     this.gpsBtn.title = "Me géolocaliser automatiquement";
     this.gpsBtn.style.display = "none";
     this.gpsBtn.onclick = () => this.handleGPSClick();
-
     this.element = document.createElement("button");
     this.element.className = "location-request-btn";
     this.element.innerHTML =
       '<i class="fas fa-map-marker-alt"></i> Modifier/Définir ma position';
-    this.element.onclick = () => {
-      if (this.isSelecting) {
-        this.cleanupMap();
-      } else {
-        this.startManualSelection();
-      }
-    };
 
+    this.element.addEventListener("click", () => {
+      if (this.isSelecting) this.cancelSelection();
+      else this.startSelectionProcess();
+    });
     this.container.appendChild(this.gpsBtn);
     this.container.appendChild(this.element);
     document.body.appendChild(this.container);
-  }
-
-  /**
-   * Crée et injecte l'élément DOM représentant la loupe pour la sélection précise sur la carte.
-   */
-  setupLoupe() {
-    this.loupeElement = document.createElement("div");
-    this.loupeElement.id = "map-loupe";
-    this.loupeElement.innerHTML = '<div class="loupe-crosshair"></div>';
-    document.body.appendChild(this.loupeElement);
   }
 
   /**
@@ -76,36 +61,74 @@ export class UserLocationComponent {
    * Tente de récupérer la position actuelle via l'API Geolocation du navigateur.
    * Si la position est valide et en France, elle est transmise au gestionnaire.
    */
-  async handleGPSClick() {
+  handleGPSClick() {
     if (!navigator.geolocation) {
-      alert("La géolocalisation n'est pas supportée par votre navigateur.");
+      alert("La géolocalisation n'est pas supportée.");
       return;
     }
+    this.gpsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        if (this.mapManager.isLocationInFrance(latlng)) {
+          this.finish(latlng);
+        } else {
+          alert("Hors de France.");
+        }
+        this.gpsBtn.innerHTML = '<i class="fas fa-crosshairs"></i>';
+      },
+      (err) => {
+        console.error(err);
+        alert("Erreur GPS.");
+        this.gpsBtn.innerHTML = '<i class="fas fa-crosshairs"></i>';
+      },
+      { enableHighAccuracy: true },
+    );
+  }
 
-    this.gpsBtn.classList.add("loading");
-
-    try {
-      const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        });
-      });
-
-      const { latitude, longitude } = position.coords;
-      const latlng = { lat: latitude, lng: longitude };
-
-      if (this.mapManager.isLocationInFrance(latlng)) {
-        this.finish(latlng);
-      } else {
-        alert("Votre position GPS semble être hors de France métropolitaine.");
-      }
-    } catch (error) {
-      alert("Impossible de récupérer votre position GPS.");
-    } finally {
-      this.gpsBtn.classList.remove("loading");
+  /**
+   * Actualise dynamiquement l'aspect visuel et le texte du bouton principal.
+   * Cette méthode ajuste le libellé ("Définir" ou "Modifier" la position)
+   * selon que des coordonnées utilisateur sont déjà enregistrées dans le MapManager.
+   * Elle s'assure également de réinitialiser le style visuel (suppression de la
+   * classe 'cancel-mode') pour refléter l'état de repos du composant.
+   * * @returns {void}
+   */
+  updateButtonState() {
+    if (this.isSelecting) return;
+    if (this.mapManager.userPosition && this.mapManager.userPosition.lat) {
+      this.element.innerHTML =
+        '<i class="fas fa-map-marker-alt"></i> Modifier la position';
+      this.element.classList.remove("cancel-mode");
+    } else {
+      this.element.innerHTML =
+        '<i class="fas fa-map-marker-alt"></i> Définir ma position';
+      this.element.classList.remove("cancel-mode");
     }
+  }
+
+  /**
+   * Crée et injecte l'élément DOM représentant la loupe pour la sélection précise sur la carte.
+   */
+  setupLoupe() {
+    this.loupeElement = document.createElement("div");
+    this.loupeElement.id = "loupe-map";
+    this.loupeElement.className = "magnifying-glass";
+    document.body.appendChild(this.loupeElement);
+  }
+
+  /**
+   * Masque le conteneur du composant.
+   */
+  hide() {
+    if (this.container) this.container.style.display = "none";
+  }
+
+  /**
+   * Affiche le conteneur du composant.
+   */
+  show() {
+    if (this.container) this.container.style.display = "flex";
   }
 
   /**
@@ -113,26 +136,36 @@ export class UserLocationComponent {
    * Masque les éléments d'interface non nécessaires, affiche la loupe
    * et active les écouteurs d'événements sur la carte.
    */
-  startManualSelection() {
+  startSelectionProcess() {
     this.isSelecting = true;
+    this.element.innerHTML = '<i class="fas fa-times"></i> Annuler';
+    this.element.classList.add("cancel-mode");
+    this.gpsBtn.style.display = "flex";
+
     this.onStartSelection();
 
     this.mapManager.hideFeatures();
-
-    this.gpsBtn.style.display = "flex";
-    this.element.classList.add("cancel-mode");
-    this.element.innerHTML = '<i class="fas fa-times"></i> Annuler';
-
-    const mapDiv = document.getElementById("map");
-    mapDiv.classList.add("cursor-crosshair");
-
     this.loupeElement.style.display = "block";
-    setTimeout(() => this.loupeElement.classList.add("visible"), 10);
+    requestAnimationFrame(() => {
+      this.loupeElement.classList.add("visible");
+    });
 
-    this.mapManager.initLoupe(this.loupeElement);
+    this.mapManager.initLoupe("loupe-map");
+    document.getElementById("map").classList.add("cursor-crosshair");
 
     this.mapManager.map.on("mousemove", this.handleMouseMove);
     this.mapManager.map.on("click", this.handleMapClick);
+  }
+
+  /**
+   * Annule le processus et revient à l'état initial
+   */
+  cancelSelection() {
+    this.isSelecting = false;
+    this.cleanupMap();
+    this.mapManager.showFeatures();
+    this.onEndSelection();
+    this.updateButtonState();
   }
 
   /**
@@ -141,16 +174,12 @@ export class UserLocationComponent {
    *
    * @param {Object} e - L'événement Leaflet contenant les coordonnées.
    */
-  handleMouseMove = (e) => {
-    const { clientX, clientY } = e.originalEvent;
-    const offsetX = 75;
-    const offsetY = 75;
+  handleMouseMove(e) {
+    const mainZoom = this.mapManager.map.getZoom();
+    const loupeZoom = Math.min(mainZoom + 4, 19);
 
-    this.loupeElement.style.left = `${clientX - offsetX}px`;
-    this.loupeElement.style.top = `${clientY - offsetY}px`;
-
-    this.mapManager.updateLoupeView(e.latlng);
-  };
+    this.mapManager.updateLoupe(e.latlng, loupeZoom);
+  }
 
   /**
    * Gère le clic sur la carte lors de la sélection manuelle.
@@ -158,13 +187,15 @@ export class UserLocationComponent {
    *
    * @param {Object} e - L'événement Leaflet contenant les coordonnées du clic.
    */
-  handleMapClick = (e) => {
+  handleMapClick(e) {
+    if (!this.isSelecting) return;
+
     if (this.mapManager.isLocationInFrance(e.latlng)) {
       this.finish(e.latlng);
     } else {
       alert("Veuillez sélectionner une position en France métropolitaine.");
     }
-  };
+  }
 
   /**
    * Nettoie l'interface et désactive le mode de sélection manuelle.
@@ -205,35 +236,7 @@ export class UserLocationComponent {
     if (this.onLocationSelected) {
       this.onLocationSelected(position);
     }
-  }
 
-  /**
-   * Affiche le conteneur du composant.
-   */
-  show() {
-    this.container.style.display = "flex";
-  }
-
-  /**
-   * Masque le conteneur du composant.
-   */
-  hide() {
-    this.container.style.display = "none";
-  }
-
-  /**
-   * Définit le callback à exécuter au début de la sélection manuelle.
-   * @param {Function} callback - La fonction à appeler.
-   */
-  setOnStartSelection(callback) {
-    this.onStartSelection = callback;
-  }
-
-  /**
-   * Définit le callback à exécuter à la fin de la sélection manuelle.
-   * @param {Function} callback - La fonction à appeler.
-   */
-  setOnEndSelection(callback) {
-    this.onEndSelection = callback;
+    setTimeout(() => this.updateButtonState(), 50);
   }
 }

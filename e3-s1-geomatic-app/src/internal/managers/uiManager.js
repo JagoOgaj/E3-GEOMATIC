@@ -61,7 +61,6 @@ export class UIManager {
       this.mapManager,
       (pos) => {
         this.mapManager.setUserPosition(pos.lat, pos.lng);
-
         if (this.navComponent) {
           this.navComponent.updateButtonState();
         }
@@ -69,7 +68,7 @@ export class UIManager {
     );
 
     this.userLocationComponent.onStartSelection = () => {
-      this.toggleGlobalVisibility(false);
+      this.toggleGlobalVisibility(false); 
     };
 
     this.userLocationComponent.onEndSelection = () => {
@@ -131,7 +130,6 @@ export class UIManager {
           }
         });
         if (this.navComponent) this.navComponent.hide();
-
         if (this.userLocationComponent) this.userLocationComponent.hide();
 
         document.body.classList.add("focus-mode");
@@ -192,6 +190,7 @@ export class UIManager {
       this.favoritesComponent?.element,
       this.resultsComponent?.element,
       this.navComponent?.element,
+      document.getElementById("btn-close-route"),
     ];
 
     components.forEach((el) => {
@@ -204,16 +203,6 @@ export class UIManager {
 
     if (isVisible && this.navComponent) {
       this.navComponent.updateButtonState();
-    }
-
-    if (this.userLocationComponent) {
-      if (isVisible) {
-        this.userLocationComponent.show();
-
-        if (this.navComponent) this.navComponent.updateButtonState();
-      } else {
-        this.userLocationComponent.hide();
-      }
     }
   }
 }
