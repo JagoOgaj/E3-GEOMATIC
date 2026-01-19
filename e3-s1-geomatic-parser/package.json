@@ -22,5 +22,8 @@
   },
   "devDependencies": {
     "prettier": "3.7.4"
+  },
+  "overrides": {
+    "tar": "7.5.3"
   }
 }
