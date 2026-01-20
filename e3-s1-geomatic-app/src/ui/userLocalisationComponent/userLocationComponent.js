@@ -151,7 +151,7 @@ export class UserLocationComponent {
     });
 
     this.mapManager.initLoupe("loupe-map");
-    document.getElementById("map").classList.add("cursor-crosshair");
+    document.getElementById("map").style.cursor = "none";
 
     this.mapManager.map.on("mousemove", this.handleMouseMove);
     this.mapManager.map.on("click", this.handleMapClick);
@@ -174,12 +174,16 @@ export class UserLocationComponent {
    *
    * @param {Object} e - L'événement Leaflet contenant les coordonnées.
    */
-  handleMouseMove(e) {
-    const mainZoom = this.mapManager.map.getZoom();
-    const loupeZoom = Math.min(mainZoom + 4, 19);
+  handleMouseMove = (e) => {
+    const { clientX, clientY } = e.originalEvent;
+    const offsetX = 75;
+    const offsetY = 75;
 
-    this.mapManager.updateLoupe(e.latlng, loupeZoom);
-  }
+    this.loupeElement.style.left = `${clientX - offsetX}px`;
+    this.loupeElement.style.top = `${clientY - offsetY}px`;
+
+    this.mapManager.updateLoupeView(e.latlng);
+  };
 
   /**
    * Gère le clic sur la carte lors de la sélection manuelle.
@@ -187,15 +191,13 @@ export class UserLocationComponent {
    *
    * @param {Object} e - L'événement Leaflet contenant les coordonnées du clic.
    */
-  handleMapClick(e) {
-    if (!this.isSelecting) return;
-
+  handleMapClick = (e) => {
     if (this.mapManager.isLocationInFrance(e.latlng)) {
       this.finish(e.latlng);
     } else {
       alert("Veuillez sélectionner une position en France métropolitaine.");
     }
-  }
+  };
 
   /**
    * Nettoie l'interface et désactive le mode de sélection manuelle.
@@ -216,7 +218,8 @@ export class UserLocationComponent {
     this.element.innerHTML =
       '<i class="fas fa-map-marker-alt"></i> Modifier/Définir ma position';
 
-    document.getElementById("map").classList.remove("cursor-crosshair");
+    document.getElementById("map").style.cursor = "";
+
     this.mapManager.map.off("mousemove", this.handleMouseMove);
     this.mapManager.map.off("click", this.handleMapClick);
   }

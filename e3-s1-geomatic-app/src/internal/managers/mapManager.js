@@ -531,9 +531,8 @@ export class MapManager {
    * Met à jour la vue de la loupe pour suivre la souris avec un zoom élevé.
    * @param {Object} latlng - Coordonnées de la souris
    */
-  updateLoupe(latlng) {
+  updateLoupeView(latlng) {
     if (this.loupeMap) {
-      // Zoom fixe élevé (ex: 16) pour effet "loupe"
       this.loupeMap.setView(latlng, 16, { animate: false });
     }
   }
