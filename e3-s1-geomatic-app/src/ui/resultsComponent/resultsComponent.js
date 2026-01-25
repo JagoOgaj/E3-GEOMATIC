@@ -109,7 +109,6 @@ export class ResultsComponent {
           company: rawName,
           sectorObj: props.sector,
           offers_count: 0,
-          total_offers: 0,
           storage_ids: [],
         });
       }
