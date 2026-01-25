@@ -229,7 +229,7 @@ export class DataManager {
         } else {
           matrix[i][j] = Math.min(
             matrix[i - 1][j - 1] + 1,
-            Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
+            Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1),
           );
         }
       }
@@ -290,61 +290,84 @@ export class DataManager {
       await this.#ensureOffersLoaded();
     }
 
-    const filteredFeatures = this.companiesGeoJson.features.filter(
-      (feature) => {
+    const filteredFeatures = this.companiesGeoJson.features
+      .map((feature) => {
         const p = feature.properties;
+        let filteredCount = 0;
 
         if (filters.sectors && filters.sectors.length > 0) {
           const sectorName = this.#getSectorName(p);
-          if (!filters.sectors.includes(sectorName)) return false;
+          if (!filters.sectors.includes(sectorName)) return null;
         }
 
         if (filters.size && filters.size.length > 0) {
-          if (!filters.size.includes(p.size)) return false;
+          if (!filters.size.includes(p.size)) return null;
         }
 
         if (filters.radius < 100 && filters.userPosition) {
           const dist = this.#calculateDistance(
             filters.userPosition,
-            feature.geometry.coordinates
+            feature.geometry.coordinates,
           );
-          if (dist > filters.radius) return false;
+          if (dist > filters.radius) return null;
         }
 
         if (filters.score > 0) {
           const companyScore = p.transport_score || 0;
-          if (companyScore < filters.score) return false;
+          if (companyScore < filters.score) return null;
         }
 
         if (filters.transportModes && filters.transportModes.length > 0) {
           const companyModes = (p.transport_modes || []).map((m) =>
-            m.toUpperCase()
+            m.toUpperCase(),
           );
           const hasMode = filters.transportModes.some((mode) =>
-            companyModes.includes(mode)
+            companyModes.includes(mode),
           );
-          if (!hasMode) return false;
+          if (!hasMode) return null;
         }
 
         if (filters.text && filters.text.trim() !== "") {
           const searchStr = filters.text.trim();
+
           if (filters.searchType === "company") {
-            if (!this.#fuzzyMatch(p.company, searchStr)) return false;
-          } else if (filters.searchType === "offer") {
+            if (!this.#fuzzyMatch(p.company, searchStr)) return null;
+
             const offers = this.offersCache
               ? this.offersCache[p.storage_id]
               : [];
-            if (!offers || offers.length === 0) return false;
-            const hasMatchingOffer = offers.some((o) =>
-              this.#fuzzyMatch(o.title, searchStr)
-            );
-            if (!hasMatchingOffer) return false;
+            filteredCount = offers ? offers.length : 0;
           }
+
+          if (filters.searchType === "offer") {
+            const offers = this.offersCache
+              ? this.offersCache[p.storage_id]
+              : [];
+
+            if (!offers || offers.length === 0) return null;
+
+            const matchingOffers = offers.filter((o) =>
+              this.#fuzzyMatch(o.title, searchStr),
+            );
+
+            if (matchingOffers.length === 0) return null;
+
+            filteredCount = matchingOffers.length;
+          }
+        } else {
+          const offers = this.offersCache ? this.offersCache[p.storage_id] : [];
+          filteredCount = offers ? offers.length : 0;
         }
 
-        return true;
-      }
-    );
+        return {
+          ...feature,
+          properties: {
+            ...p,
+            offers_count: filteredCount,
+          },
+        };
+      })
+      .filter(Boolean);
 
     return {
       type: "FeatureCollection",

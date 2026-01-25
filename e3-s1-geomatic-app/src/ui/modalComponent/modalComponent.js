@@ -10,12 +10,13 @@
  * @param {MapManager} mapManager - Instance gérant la carte (utilisée pour vérifier la position utilisateur).
  */
 export class ModalComponent {
-  constructor(favManager, mapManager) {
+  constructor(favManager, mapManager, searchComponent) {
     this.parent = document.body;
     this.container = null;
     this.currentOffer = null;
     this.favManager = favManager;
     this.mapManager = mapManager;
+    this.searchComponent = searchComponent;
 
     this.onShowStationsOnMap = null;
     this.onItineraryCallback = null;
@@ -246,10 +247,36 @@ export class ModalComponent {
   openOfferList(companyData, offers, onSelectOffer) {
     const existingModal = document.getElementById("olm-modal-overlay");
     if (existingModal) existingModal.remove();
+
+    let filteredOffers = offers;
+    const searchFilters = this.searchComponent
+      ? this.searchComponent.filters
+      : null;
+    let isFiltered = false;
+
+    if (
+      searchFilters &&
+      searchFilters.text &&
+      searchFilters.searchType === "offer"
+    ) {
+      const search = searchFilters.text.toLowerCase();
+      filteredOffers = offers.filter((o) => {
+        const titleMatch = o.title && o.title.toLowerCase().includes(search);
+        const descMatch =
+          o.offerDescription &&
+          o.offerDescription.toLowerCase().includes(search);
+        return titleMatch || descMatch;
+      });
+      isFiltered = true;
+    }
+
     const overlay = document.createElement("div");
     overlay.id = "olm-modal-overlay";
     overlay.className = "olm-overlay";
-    const s = offers.length > 1 ? "s" : "";
+
+    const count = filteredOffers.length;
+    const s = count > 1 ? "s" : "";
+
     let sectorHtml = "";
     if (companyData.sector) {
       const sec = companyData.sector.section || companyData.sector.label;
@@ -257,6 +284,35 @@ export class ModalComponent {
         sectorHtml = `<span class="olm-sector">${sec}</span>`;
       }
     }
+
+    let listContentHtml = "";
+    if (count === 0 && isFiltered) {
+      listContentHtml = `<div class="olm-no-results">Aucune offre ne correspond à "${searchFilters.text}" pour cette entreprise.</div>`;
+    } else {
+      listContentHtml = filteredOffers
+        .map((o, i) => {
+          const type = Array.isArray(o.contractType)
+            ? o.contractType[0]
+            : o.contractType || "Contrat";
+
+          return `
+            <div class="olm-item" data-index="${i}">
+                <div class="olm-item-info">
+                    <span class="olm-item-title">${o.title}</span>
+                    <span class="olm-item-contract">${type}</span>
+                </div>
+                <i class="fas fa-chevron-right olm-chevron"></i>
+            </div>
+            `;
+        })
+        .join("");
+    }
+
+    const countStyle = isFiltered
+      ? 'style="color: #e67e22; font-weight: bold;"'
+      : "";
+    const filterText = isFiltered ? "(filtré)" : "";
+
     overlay.innerHTML = `
       <div class="olm-content">
         <div class="olm-header">
@@ -266,39 +322,22 @@ export class ModalComponent {
                 }</h3>
                 <div class="olm-subtitle">
                     ${sectorHtml}
-                    <span class="olm-count">${
-                      offers.length
-                    } poste${s} disponible${s}</span>
+                    <span class="olm-count" ${countStyle}>${count} poste${s} disponible${s} ${filterText}</span>
                 </div>
             </div>
             <button class="olm-close-btn"><i class="fas fa-times"></i></button>
         </div>
         <div class="olm-body">
             <div class="olm-list-container">
-                ${offers
-                  .map((o, i) => {
-                    const type = Array.isArray(o.contractType)
-                      ? o.contractType[0]
-                      : o.contractType || "Contrat";
-                    return `
-                    <div class="olm-item" data-index="${i}">
-                        <div class="olm-item-info">
-                            <span class="olm-item-title">${o.title}</span>
-                            <span class="olm-item-contract">${type}</span>
-                        </div>
-                        <i class="fas fa-chevron-right olm-chevron"></i>
-                    </div>
-                    `;
-                  })
-                  .join("")}
+                ${listContentHtml}
             </div>
         </div>
       </div>
-
     `;
 
     document.body.appendChild(overlay);
     document.body.style.overflow = "hidden";
+
     const closeModal = (keepScroll = false) => {
       overlay.classList.add("fade-out");
       setTimeout(() => {
@@ -308,19 +347,21 @@ export class ModalComponent {
         }
       }, 200);
     };
+
     overlay
       .querySelector(".olm-close-btn")
       .addEventListener("click", () => closeModal(false));
+
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay) closeModal(false);
     });
 
     overlay.querySelectorAll(".olm-item").forEach((el) => {
       el.addEventListener("click", () => {
-        const index = el.dataset.index;
+        const index = parseInt(el.dataset.index, 10);
         closeModal(true);
         setTimeout(() => {
-          onSelectOffer(offers[index]);
+          onSelectOffer(filteredOffers[index]);
         }, 150);
       });
     });

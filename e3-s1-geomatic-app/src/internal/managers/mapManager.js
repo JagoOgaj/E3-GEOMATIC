@@ -145,7 +145,6 @@ export class MapManager {
         };
 
         const count = props.offers_count || 0;
-
         if (count === 0) return null;
 
         const lat = feature.geometry.coordinates[1];

@@ -51,8 +51,9 @@ export class UIManager {
       "ui-layer",
       this.favManager,
       this.dataManger,
+      this.searchComponent,
     );
-    this.jobModal = new ModalComponent(this.favManager, this.mapManager);
+    this.jobModal = new ModalComponent(this.favManager, this.mapManager, this.searchComponent);
     this.navComponent = new NavigationComponent("ui-layer", this.mapManager);
     this.routeComponent = new RouteDetailsComponent();
     this.transportComponent = new TransportComponent("ui-layer");
