@@ -13,10 +13,11 @@
  * @param {Object} dataManager - Instance du gestionnaire de données (non utilisé directement ici mais conservé par convention).
  */
 export class ResultsComponent {
-  constructor(parentId, favManager, dataManager) {
+  constructor(parentId, favManager, dataManager, searchComponent) {
     this.parent = document.getElementById(parentId);
     this.favManager = favManager;
     this.dataManager = dataManager;
+    this.searchComponent = searchComponent;
     this.element = null;
     this.isExpanded = false;
     this.allCompanies = [];
@@ -100,18 +101,29 @@ export class ResultsComponent {
 
     features.forEach((f) => {
       const props = f.properties;
-      const name = props.company || "Entreprise Inconnue";
-      if (!groupsMap.has(name)) {
-        groupsMap.set(name, {
-          company: name,
+      const rawName = props.company || "Entreprise Inconnue";
+      const normalizedKey = rawName.trim().toLowerCase();
+
+      if (!groupsMap.has(normalizedKey)) {
+        groupsMap.set(normalizedKey, {
+          company: rawName,
           sectorObj: props.sector,
           offers_count: 0,
+          total_offers: 0,
           storage_ids: [],
         });
       }
-      const group = groupsMap.get(name);
+
+      const group = groupsMap.get(normalizedKey);
       group.storage_ids.push(props.storage_id);
+
       group.offers_count += props.offers_count || 0;
+
+      group.total_offers +=
+        props.total_offers !== undefined
+          ? props.total_offers
+          : props.offers_count || 0;
+
       if (
         (!group.sectorObj ||
           (!group.sectorObj.label && !group.sectorObj.section)) &&
@@ -122,6 +134,8 @@ export class ResultsComponent {
     });
 
     this.allCompanies = Array.from(groupsMap.values());
+    this.allCompanies.sort((a, b) => a.company.localeCompare(b.company));
+
     this.currentTextFilter = textFilter;
     this.renderedCount = 0;
     this.#updateHeader();
@@ -132,6 +146,7 @@ export class ResultsComponent {
       this.observer.unobserve(this.sentinelElement);
       this.sentinelElement = null;
     }
+
     if (this.isExpanded) this.#renderNextBatch();
     if (
       this.allCompanies.length > 0 &&
@@ -154,6 +169,7 @@ export class ResultsComponent {
   #renderNextBatch() {
     if (this.renderedCount >= this.allCompanies.length) return;
     const container = this.element.querySelector(".res-content");
+
     if (this.sentinelElement) {
       this.observer.unobserve(this.sentinelElement);
       this.sentinelElement.remove();
@@ -163,6 +179,7 @@ export class ResultsComponent {
       this.renderedCount,
       this.renderedCount + this.batchSize,
     );
+
     const html = nextBatch
       .map((group, index) => {
         let sectorLabel = "Secteur non renseigné";
@@ -178,8 +195,11 @@ export class ResultsComponent {
           )
             sectorLabel = group.sectorObj.label;
         }
+
         const domId = `group-${this.renderedCount + index}`;
         const storageIdsJson = JSON.stringify(group.storage_ids);
+
+        let badgeText = `${group.offers_count} offres`;
 
         return `
             <div class="company-card" data-storage-ids='${storageIdsJson}'>
@@ -189,7 +209,7 @@ export class ResultsComponent {
                         <span class="company-sector">${sectorLabel}</span>
                     </div>
                     <div class="header-right">
-                        <span class="company-badge">${group.offers_count} offres</span>
+                        <span class="company-badge">${badgeText}</span>
                         <i class="fas fa-chevron-down accordion-chevron"></i>
                     </div>
                 </div>
@@ -370,20 +390,36 @@ export class ResultsComponent {
         );
       });
 
-      if (this.currentTextFilter && this.currentTextFilter.length > 2) {
-        const search = this.currentTextFilter.toLowerCase();
-        allOffers = allOffers.filter(
-          (o) =>
-            o.title.toLowerCase().includes(search) ||
-            (o.offerDescription &&
-              o.offerDescription.toLowerCase().includes(search)),
-        );
+      const searchFilters = this.searchComponent
+        ? this.searchComponent.filters
+        : null;
+
+      if (
+        searchFilters &&
+        searchFilters.text &&
+        searchFilters.text.length > 0 &&
+        searchFilters.searchType === "offer"
+      ) {
+        const search = searchFilters.text.toLowerCase();
+
+        allOffers = allOffers.filter((o) => {
+          const titleMatch = o.title && o.title.toLowerCase().includes(search);
+          return titleMatch;
+        });
       }
 
       container.innerHTML = "";
 
       if (allOffers.length === 0) {
-        container.innerHTML = `<div class="no-offers">Aucune offre trouvée.</div>`;
+        const isFiltered =
+          searchFilters &&
+          searchFilters.searchType === "offer" &&
+          searchFilters.text;
+        const msg = isFiltered
+          ? `Aucune offre ne correspond à "${searchFilters.text}" pour cette entreprise.`
+          : `Aucune offre disponible.`;
+
+        container.innerHTML = `<div class="no-offers">${msg}</div>`;
         return;
       }
 
