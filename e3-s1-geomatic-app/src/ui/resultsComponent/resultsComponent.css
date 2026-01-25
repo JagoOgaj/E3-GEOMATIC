@@ -46,7 +46,7 @@
 .res-icon-box {
   width: 42px;
   height: 42px;
-  background: var(--primary-color, #3498db);
+  background: #2c3e50;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -181,7 +181,7 @@
 }
 
 .company-card.open {
-  border-color: var(--accent-color, #3498db);
+  border-color: #3498db;
   box-shadow: 0 8px 20px rgba(52, 152, 219, 0.15);
   transform: none;
   background: #fff;
@@ -229,7 +229,7 @@
   font-weight: 600;
 }
 .company-card.open .company-badge {
-  background: var(--accent-color, #3498db);
+  background: #3498db;
   color: white;
 }
 
@@ -244,7 +244,7 @@
 
 .company-card.open .accordion-chevron {
   transform: rotate(180deg);
-  color: var(--accent-color, #3498db);
+  color: #3498db;
 }
 
 .offers-list-container {
@@ -309,7 +309,7 @@
 }
 .offer-contract {
   font-size: 0.75rem;
-  color: var(--accent-color, #3498db);
+  color: #3498db;
   font-weight: 700;
   text-transform: uppercase;
   margin-top: 3px;

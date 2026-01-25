@@ -74,7 +74,7 @@
 .btn-center {
   grid-column: 2;
   grid-row: 2;
-  background: var(--primary-color);
+  background: #2c3e50;
   color: white;
   border-radius: 50%;
   box-shadow: 0 2px 5px rgba(52, 152, 219, 0.4);
