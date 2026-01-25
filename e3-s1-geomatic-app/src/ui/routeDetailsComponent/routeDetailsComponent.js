@@ -57,10 +57,29 @@ export class RouteDetailsComponent {
   }
 
   /**
+   * Helper pour formater les secondes en format lisible (min ou h + min).
+   * @param {number} seconds - Durée en secondes.
+   * @returns {string} - Chaine formatée (ex: "45 min" ou "1 h 15 min").
+   */
+  #formatDuration(seconds) {
+    const totalMinutes = Math.round(seconds / 60);
+
+    if (totalMinutes < 60) {
+      return `${totalMinutes || 1} min`;
+    }
+
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+
+    const mStr = m < 10 ? `0${m}` : m;
+
+    return `${h} h ${mStr} min`;
+  }
+
+  /**
    * Génère et affiche les détails du trajet à partir des données fournies.
    * Cette méthode transforme les données brutes du chemin (PathFinder) en éléments visuels HTML,
-   * en appliquant une logique de présentation spécifique selon le type de transport
-   * (icônes, couleurs, libellés "Direction" vs "Marcher vers", badge de nombre d'arrêts).
+   * en appliquant une logique de présentation spécifique selon le type de transport.
    *
    * @param {Object} pathData - L'objet contenant les données du chemin.
    * @param {number} pathData.totalDuration - La durée totale en secondes.
@@ -69,9 +88,10 @@ export class RouteDetailsComponent {
   show(pathData) {
     const container = this.element.querySelector(".rd-content");
 
-    const totalMin = Math.round(pathData.totalDuration / 60);
+    const formattedTotal = this.#formatDuration(pathData.totalDuration);
+
     this.element.querySelector("#rd-total-time").innerHTML =
-      `<span>Durée totale : </span><b>${totalMin} min</b>`;
+      `<span>Durée totale : </span><b>${formattedTotal}</b>`;
 
     container.innerHTML = pathData.path
       .map((step, i) => {
@@ -104,7 +124,8 @@ export class RouteDetailsComponent {
           isWalk = false;
         }
 
-        const duration = Math.round(step.weight / 60) || 1;
+        const formattedStepDuration = this.#formatDuration(step.weight);
+
         const stopsInfo =
           !isWalk && step.stopsCount > 0
             ? `<span class="badge-stops">${step.stopsCount} arrêt${step.stopsCount > 1 ? "s" : ""}</span>`
@@ -137,7 +158,7 @@ export class RouteDetailsComponent {
                 <div class="step-right-col">
                     <div class="step-header">
                         <span class="step-mode">${modeLabel}</span>
-                        <span class="step-duration"><i class="far fa-clock"></i> ${duration} min</span>
+                        <span class="step-duration"><i class="far fa-clock"></i> ${formattedStepDuration}</span>
                     </div>
                     
                     <div class="step-body">
