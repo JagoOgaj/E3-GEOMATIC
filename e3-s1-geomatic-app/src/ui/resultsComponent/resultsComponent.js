@@ -138,6 +138,11 @@ export class ResultsComponent {
     this.currentTextFilter = textFilter;
     this.renderedCount = 0;
     this.#updateHeader();
+    
+    // Mettre à jour le nombre de résultats dans le widget de recherche
+    if (this.searchComponent && typeof this.searchComponent.updateResultsCount === 'function') {
+      this.searchComponent.updateResultsCount(this.allCompanies.length);
+    }
 
     const container = this.element.querySelector(".res-content");
     container.innerHTML = "";

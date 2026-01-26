@@ -136,6 +136,11 @@ export class SearchComponent {
       this.filters,
     );
 
+    // Mettre à jour le composant de résultats
+    if (window.uiManager && window.uiManager.resultsComponent) {
+      window.uiManager.resultsComponent.updateResults(filteredGeoJson, this.filters.text);
+    }
+
     this.mapManager.updateMarkers(filteredGeoJson, (companyProps) => {
       if (this.onMarkerClickCallback) {
         this.onMarkerClickCallback(companyProps);
@@ -165,6 +170,35 @@ export class SearchComponent {
     } else {
       icon.classList.remove("pulse-active");
     }
+  }
+
+  /**
+   * Méthode privée. Met à jour l'affichage du nombre de résultats.
+   * @param {number} count - Le nombre de résultats.
+   * @returns {void}
+   * @private
+   */
+  #updateResultsCount(count) {
+    const resultsCountContainer = this.element.querySelector(".results-count-container");
+    const resultsCountText = this.element.querySelector("#results-count-text");
+    
+    if (resultsCountContainer && resultsCountText) {
+      if (count > 0) {
+        resultsCountText.textContent = `${count} résultat${count > 1 ? 's' : ''}`;
+        resultsCountContainer.style.display = "block";
+      } else {
+        resultsCountContainer.style.display = "none";
+      }
+    }
+  }
+
+  /**
+   * Méthode publique pour mettre à jour le nombre de résultats affiché.
+   * @param {number} count - Le nombre de résultats.
+   * @returns {void}
+   */
+  updateResultsCount(count) {
+    this.#updateResultsCount(count);
   }
 
   /**
@@ -215,6 +249,9 @@ export class SearchComponent {
     }
 
     if (this.onExpand) this.onExpand();
+    
+    // Appliquer les filtres initiaux pour afficher le nombre de résultats
+    this.#applyFilters();
   }
 
   /**
@@ -423,6 +460,10 @@ export class SearchComponent {
                     </div>
                 </div>
             </details>
+            
+            <div class="results-count-container" style="padding: 15px; text-align: center; font-size: 0.9rem; color: #3498db; cursor: pointer; border-top: 1px solid #eee; margin-top: 10px; display: none;">
+                <span id="results-count-text"></span>
+            </div>
         `;
 
     this.#bindDynamicEvents(container);
@@ -646,6 +687,20 @@ export class SearchComponent {
         }
         this.#applyFilters();
       });
-    });
-  }
+   });
+   
+   // Ajouter l'écouteur d'événements pour le clic sur le compteur de résultats
+   const resultsCountContainer = container.querySelector(".results-count-container");
+   if (resultsCountContainer) {
+     resultsCountContainer.addEventListener("click", () => {
+       // Fermer le widget de recherche
+       this.collapse();
+       
+       // Ouvrir le widget de résultats si disponible
+       if (window.uiManager && window.uiManager.resultsComponent) {
+         window.uiManager.resultsComponent.expand();
+       }
+     });
+   }
+ }
 }

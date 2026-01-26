@@ -664,3 +664,21 @@ input:checked + .slider:before {
   cursor: not-allowed;
   background: #e9ecef;
 }
+
+.results-count-container {
+  padding: 15px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #3498db;
+  cursor: pointer;
+  border-top: 1px solid #eee;
+  margin-top: 10px;
+  display: none;
+  transition: all 0.3s ease;
+  border-radius: 0 0 16px 16px;
+}
+
+.results-count-container:hover {
+  background-color: #f8f9fa;
+  color: #2980b9;
+}
