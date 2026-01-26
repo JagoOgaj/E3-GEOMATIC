@@ -20,6 +20,8 @@ export class UserLocationComponent {
     this.onStartSelection = () => {};
     this.onEndSelection = () => {};
 
+    this.boundHideLoupeOnHover = null;
+    this.boundShowLoupeOnHover = null;
   }
 
   /**
@@ -151,11 +153,13 @@ export class UserLocationComponent {
       this.loupeElement.classList.add("visible");
     });
 
-    // Add hover events to hide loupe when hovering over buttons
-    this.element.addEventListener('mouseenter', this.hideLoupeOnHover.bind(this));
-    this.element.addEventListener('mouseleave', this.showLoupeOnHover.bind(this));
-    this.gpsBtn.addEventListener('mouseenter', this.hideLoupeOnHover.bind(this));
-    this.gpsBtn.addEventListener('mouseleave', this.showLoupeOnHover.bind(this));
+    this.boundHideLoupeOnHover = this.hideLoupeOnHover.bind(this);
+    this.boundShowLoupeOnHover = this.showLoupeOnHover.bind(this);
+
+    this.element.addEventListener('mouseenter', this.boundHideLoupeOnHover);
+    this.element.addEventListener('mouseleave', this.boundShowLoupeOnHover);
+    this.gpsBtn.addEventListener('mouseenter', this.boundHideLoupeOnHover);
+    this.gpsBtn.addEventListener('mouseleave', this.boundShowLoupeOnHover);
 
     this.mapManager.initLoupe("loupe-map");
     document.getElementById("map").style.cursor = "none";
@@ -251,10 +255,10 @@ export class UserLocationComponent {
     document.getElementById("map").style.cursor = "";
 
     // Remove hover event listeners
-    this.element.removeEventListener('mouseenter', this.hideLoupeOnHover.bind(this));
-    this.element.removeEventListener('mouseleave', this.showLoupeOnHover.bind(this));
-    this.gpsBtn.removeEventListener('mouseenter', this.hideLoupeOnHover.bind(this));
-    this.gpsBtn.removeEventListener('mouseleave', this.showLoupeOnHover.bind(this));
+    this.element.removeEventListener('mouseenter', this.boundHideLoupeOnHover);
+    this.element.removeEventListener('mouseleave', this.boundShowLoupeOnHover);
+    this.gpsBtn.removeEventListener('mouseenter', this.boundHideLoupeOnHover);
+    this.gpsBtn.removeEventListener('mouseleave', this.boundShowLoupeOnHover);
 
     this.mapManager.map.off("mousemove", this.handleMouseMove);
     this.mapManager.map.off("click", this.handleMapClick);
