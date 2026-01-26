@@ -280,9 +280,6 @@ export class ModalComponent {
                     <h3 class="section-title" style="border:none; margin:0; padding:0;">
                         <i class="fas fa-map-signs"></i> Transports (${stations.length})
                     </h3>
-                    <button id="btn-show-stations-map" class="btn-small-action">
-                        <i class="fas fa-map-marked-alt"></i> Voir sur la carte
-                    </button>
                 </div>
                 <div class="stations-list">
                     ${listItems}
