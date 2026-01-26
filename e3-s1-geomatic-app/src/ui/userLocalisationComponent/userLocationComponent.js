@@ -19,6 +19,7 @@ export class UserLocationComponent {
 
     this.onStartSelection = () => {};
     this.onEndSelection = () => {};
+
   }
 
   /**
@@ -150,6 +151,12 @@ export class UserLocationComponent {
       this.loupeElement.classList.add("visible");
     });
 
+    // Add hover events to hide loupe when hovering over buttons
+    this.element.addEventListener('mouseenter', this.hideLoupeOnHover.bind(this));
+    this.element.addEventListener('mouseleave', this.showLoupeOnHover.bind(this));
+    this.gpsBtn.addEventListener('mouseenter', this.hideLoupeOnHover.bind(this));
+    this.gpsBtn.addEventListener('mouseleave', this.showLoupeOnHover.bind(this));
+
     this.mapManager.initLoupe("loupe-map");
     document.getElementById("map").style.cursor = "none";
 
@@ -166,6 +173,11 @@ export class UserLocationComponent {
     this.mapManager.showFeatures();
     this.onEndSelection();
     this.updateButtonState();
+    
+    // Ensure loupe is visible again after canceling
+    if (this.loupeElement) {
+      this.loupeElement.classList.add("visible");
+    }
   }
 
   /**
@@ -197,7 +209,25 @@ export class UserLocationComponent {
     } else {
       alert("Veuillez sélectionner une position en France métropolitaine.");
     }
-  };
+  }
+
+  /**
+   * Hide the loupe when hovering over buttons
+   */
+  hideLoupeOnHover() {
+    if (this.isSelecting && this.loupeElement) {
+      this.loupeElement.classList.remove("visible");
+    }
+  }
+
+  /**
+   * Show the loupe when leaving buttons
+   */
+  showLoupeOnHover() {
+    if (this.isSelecting && this.loupeElement) {
+      this.loupeElement.classList.add("visible");
+    }
+  }
 
   /**
    * Nettoie l'interface et désactive le mode de sélection manuelle.
@@ -219,6 +249,12 @@ export class UserLocationComponent {
       '<i class="fas fa-map-marker-alt"></i> Modifier/Définir ma position';
 
     document.getElementById("map").style.cursor = "";
+
+    // Remove hover event listeners
+    this.element.removeEventListener('mouseenter', this.hideLoupeOnHover.bind(this));
+    this.element.removeEventListener('mouseleave', this.showLoupeOnHover.bind(this));
+    this.gpsBtn.removeEventListener('mouseenter', this.hideLoupeOnHover.bind(this));
+    this.gpsBtn.removeEventListener('mouseleave', this.showLoupeOnHover.bind(this));
 
     this.mapManager.map.off("mousemove", this.handleMouseMove);
     this.mapManager.map.off("click", this.handleMapClick);
