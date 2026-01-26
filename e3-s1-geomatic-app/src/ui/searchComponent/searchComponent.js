@@ -201,12 +201,8 @@ export class SearchComponent {
     const resultsCountText = this.element.querySelector("#results-count-text");
     
     if (resultsCountContainer && resultsCountText) {
-      if (count > 0) {
-        resultsCountText.textContent = `${count} résultat${count > 1 ? 's' : ''}`;
-        resultsCountContainer.style.display = "block";
-      } else {
-        resultsCountContainer.style.display = "none";
-      }
+      resultsCountText.textContent = `${count} résultat${count > 1 ? 's' : ''}`;
+      resultsCountContainer.style.display = "block";
     }
   }
 
