@@ -11,18 +11,21 @@
  */
 export class ModalComponent {
   constructor(favManager, mapManager, searchComponent) {
-    this.parent = document.body;
-    this.container = null;
-    this.currentOffer = null;
-    this.favManager = favManager;
-    this.mapManager = mapManager;
-    this.searchComponent = searchComponent;
+   this.parent = document.body;
+   this.container = null;
+   this.currentOffer = null;
+   this.favManager = favManager;
+   this.mapManager = mapManager;
+   this.searchComponent = searchComponent;
 
-    this.onShowStationsOnMap = null;
-    this.onItineraryCallback = null;
+   this.onShowStationsOnMap = null;
+   this.onItineraryCallback = null;
+   
+   // Callback pour notifier le UIManager du changement de visibilité
+   this.onVisibilityChange = null;
 
-    this.init();
-  }
+   this.init();
+ }
 
   /**
    * Initialise le squelette HTML de la modale principale, l'injecte dans le document
@@ -50,41 +53,51 @@ export class ModalComponent {
    * et met à jour les classes CSS pour l'animation de sortie.
    */
   hide() {
-    if (!this.container) return;
-    
-    this.container.classList.remove("hidden");
-    
-    this.container.classList.add("hidden");
-    document.body.style.overflow = "";
-    
-    // Hide transports when modal is closed
-    if (this.mapManager && this.mapManager.clearStations) {
-      this.mapManager.clearStations();
-    }
-    
-    // Retirer complètement le modal du DOM quand il est caché
-    setTimeout(() => {
-      if (this.container && this.container.classList.contains("hidden")) {
-        this.container.remove();
-        this.container = null;
-      }
-    }, 300);
-  }
+   if (!this.container) return;
+   
+   this.container.classList.remove("hidden");
+   
+   this.container.classList.add("hidden");
+   document.body.style.overflow = "";
+   
+   // Notifier le UIManager que la modale est cachée
+   if (this.onVisibilityChange) {
+     this.onVisibilityChange(false);
+   }
+   
+   // Hide transports when modal is closed
+   if (this.mapManager && this.mapManager.clearStations) {
+     this.mapManager.clearStations();
+   }
+   
+   // Retirer complètement le modal du DOM quand il est caché
+   setTimeout(() => {
+     if (this.container && this.container.classList.contains("hidden")) {
+       this.container.remove();
+       this.container = null;
+     }
+   }, 300);
+ }
 
   /**
    * Affiche la modale principale sans bloquer le défilement de l'arrière-plan
    * et affiche les transports sur la carte.
    */
   show() {
-    if (!this.container) {
-      this.createContainer();
-    }
-    if (this.container) {
-      this.container.classList.remove("hidden");
-      // Ne pas bloquer le défilement pour permettre l'interaction avec la carte
-      document.body.style.overflow = "";
-    }
-  }
+   if (!this.container) {
+     this.createContainer();
+   }
+   if (this.container) {
+     this.container.classList.remove("hidden");
+     // Ne pas bloquer le défilement pour permettre l'interaction avec la carte
+     document.body.style.overflow = "";
+     
+     // Notifier le UIManager que la modale est visible
+     if (this.onVisibilityChange) {
+       this.onVisibilityChange(true);
+     }
+   }
+ }
 
   /**
    * Prépare et ouvre la vue détaillée d'une offre d'emploi spécifique.
