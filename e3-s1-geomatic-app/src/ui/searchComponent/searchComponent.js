@@ -126,6 +126,23 @@ export class SearchComponent {
    * @private
    */
   async #applyFilters() {
+    // Vérifier que toutes les dépendances sont initialisées
+    if (!this.dataManager || !this.mapManager) {
+      return;
+    }
+
+    // Forcer l'initialisation des offres si ce n'est pas déjà fait
+    if (!this.dataManager.offersCache) {
+      // Appeler la méthode privée via une méthode publique existante
+      try {
+        // On appelle getOffersByStorageId avec un ID qui n'existe pas
+        // Cela va déclencher le chargement du cache sans erreur
+        await this.dataManager.getOffersByStorageId("");
+      } catch (e) {
+        // Ignorer les erreurs d'initialisation
+      }
+    }
+
     if (this.mapManager && this.mapManager.userPosition) {
       this.filters.userPosition = this.mapManager.userPosition;
     }
