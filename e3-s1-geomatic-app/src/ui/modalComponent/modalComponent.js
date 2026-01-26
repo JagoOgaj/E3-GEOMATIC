@@ -11,30 +11,38 @@
  */
 export class ModalComponent {
   constructor(favManager, mapManager, searchComponent) {
-    this.parent = document.body;
-    this.container = null;
-    this.currentOffer = null;
-    this.favManager = favManager;
-    this.mapManager = mapManager;
-    this.searchComponent = searchComponent;
+   this.parent = document.body;
+   this.container = null;
+   this.currentOffer = null;
+   this.favManager = favManager;
+   this.mapManager = mapManager;
+   this.searchComponent = searchComponent;
 
-    this.onShowStationsOnMap = null;
-    this.onItineraryCallback = null;
+   this.onShowStationsOnMap = null;
+   this.onItineraryCallback = null;
+   
+   // Callback pour notifier le UIManager du changement de visibilité
+   this.onVisibilityChange = null;
 
-    this.init();
-  }
+   this.init();
+ }
 
   /**
    * Initialise le squelette HTML de la modale principale, l'injecte dans le document
    * et configure la fermeture automatique lors d'un clic sur l'overlay (fond sombre).
    */
   init() {
+    // Ne pas créer le container ici, seulement quand on en a besoin
+    this.container = null;
+  }
+  
+  createContainer() {
     this.container = document.createElement("div");
     this.container.id = "offer-modal";
     this.container.className = "modal-wrapper hidden";
     this.container.innerHTML = `<div class="modal-content" id="modal-content-box"></div>`;
     this.parent.appendChild(this.container);
-
+    
     this.container.addEventListener("click", (e) => {
       if (e.target === this.container) this.hide();
     });
@@ -45,20 +53,51 @@ export class ModalComponent {
    * et met à jour les classes CSS pour l'animation de sortie.
    */
   hide() {
-    this.container.classList.remove("hidden");
-
-    this.container.classList.add("hidden");
-    document.body.style.overflow = "";
-  }
+   if (!this.container) return;
+   
+   this.container.classList.remove("hidden");
+   
+   this.container.classList.add("hidden");
+   document.body.style.overflow = "";
+   
+   // Notifier le UIManager que la modale est cachée
+   if (this.onVisibilityChange) {
+     this.onVisibilityChange(false);
+   }
+   
+   // Hide transports when modal is closed
+   if (this.mapManager && this.mapManager.clearStations) {
+     this.mapManager.clearStations();
+   }
+   
+   // Retirer complètement le modal du DOM quand il est caché
+   setTimeout(() => {
+     if (this.container && this.container.classList.contains("hidden")) {
+       this.container.remove();
+       this.container = null;
+     }
+   }, 300);
+ }
 
   /**
-   * Affiche la modale principale et bloque le défilement de l'arrière-plan (body)
-   * pour une meilleure expérience utilisateur sur mobile et desktop.
+   * Affiche la modale principale sans bloquer le défilement de l'arrière-plan
+   * et affiche les transports sur la carte.
    */
   show() {
-    this.container.classList.remove("hidden");
-    document.body.style.overflow = "hidden";
-  }
+   if (!this.container) {
+     this.createContainer();
+   }
+   if (this.container) {
+     this.container.classList.remove("hidden");
+     // Ne pas bloquer le défilement pour permettre l'interaction avec la carte
+     document.body.style.overflow = "";
+     
+     // Notifier le UIManager que la modale est visible
+     if (this.onVisibilityChange) {
+       this.onVisibilityChange(true);
+     }
+   }
+ }
 
   /**
    * Prépare et ouvre la vue détaillée d'une offre d'emploi spécifique.
@@ -72,6 +111,10 @@ export class ModalComponent {
    * @param {Array} [stations=[]] - Liste des stations de transport à proximité trouvées.
    */
   openOfferDetail(offer, companyInfo, stations = []) {
+    // S'assurer que le container existe avant de l'utiliser
+    if (!this.container) {
+      this.createContainer();
+    }
     this.currentOffer = { ...offer, ...(companyInfo || {}) };
     const companyName =
       this.currentOffer.company || offer.companyName || "Entreprise";
@@ -98,33 +141,75 @@ export class ModalComponent {
       </div>
       <div class="modal-body-scroll" id="modal-dynamic-body"></div>
       <div class="modal-footer-grid">
-          <a href="${offer.applyUrl || "#"}" target="_blank" class="footer-btn btn-apply">
-              <i class="fas fa-paper-plane"></i> Postuler
-          </a>
+          <button class="footer-btn btn-fav" id="footer-fav-btn">
+              <i class="far fa-heart"></i>
+          </button>
+          
+          <div class="footer-export-menu" id="footer-export-menu">
+              <button class="footer-btn btn-export" id="footer-export-btn">
+                  <i class="fas fa-download"></i>
+              </button>
+              <div class="export-dropdown" id="export-dropdown">
+                  <button class="export-option" data-format="txt">Texte (.txt)</button>
+                  <button class="export-option" data-format="csv">CSV (.csv)</button>
+                  <button class="export-option" data-format="json">JSON (.json)</button>
+              </div>
+          </div>
           
           <button class="footer-btn btn-route ${btnDisabledClass}" title="${btnTitle}" ${btnDisabledAttr}>
               <i class="fas fa-route"></i> Itinéraire
           </button>
           
-          <button class="footer-btn btn-fav" id="footer-fav-btn">
-              <i class="far fa-heart"></i> <span>Favori</span>
-          </button>
-          <button class="footer-btn btn-close">
-              <i class="fas fa-times"></i> Fermer
-          </button>
+          <a href="${offer.applyUrl || "#"}" target="_blank" class="footer-btn btn-apply">
+              <i class="fas fa-paper-plane"></i> Postuler
+          </a>
       </div>
     `;
 
-    this.container
-      .querySelector(".modal-close-btn")
-      .addEventListener("click", () => this.hide());
-    this.container
-      .querySelector(".btn-close")
-      .addEventListener("click", () => this.hide());
+    if (this.container) {
+      this.container
+        .querySelector(".modal-close-btn")
+        .addEventListener("click", () => this.hide());
+    }
+
+    // Configuration du menu d'export
+    const exportMenu = this.container.querySelector("#footer-export-menu");
+    const exportBtn = this.container.querySelector("#footer-export-btn");
+    const exportOptions = this.container.querySelectorAll(".export-option");
+    
+    if (exportBtn && exportMenu) {
+      exportBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        exportMenu.classList.toggle("active");
+      });
+      
+      // Gérer les clics sur les options d'export
+      exportOptions.forEach(option => {
+        option.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const format = e.target.dataset.format;
+          this.#exportOffer(offer, companyInfo, format);
+          exportMenu.classList.remove("active");
+        });
+      });
+      
+      // Fermer le menu d'export lorsqu'on clique ailleurs
+      document.addEventListener("click", (e) => {
+        if (exportMenu && !exportMenu.contains(e.target)) {
+          exportMenu.classList.remove("active");
+        }
+      });
+    }
 
     this.#renderDetailBody(offer, stations);
     this.#setupFooterEvents();
     this.#updateFavoriteBtnState();
+    
+    // Afficher les transports sur la carte quand la modale s'ouvre
+    if (this.mapManager && this.mapManager.displayStations) {
+      this.mapManager.displayStations(stations);
+    }
+    
     this.show();
   }
 
@@ -191,13 +276,10 @@ export class ModalComponent {
 
       stationsHtml = `
             <div class="detail-section">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom: 2px solid #f1f3f5; padding-bottom: 8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:36px; margin-bottom:12px; border-bottom: 2px solid #f1f3f5; padding-bottom: 8px;">
                     <h3 class="section-title" style="border:none; margin:0; padding:0;">
                         <i class="fas fa-map-signs"></i> Transports (${stations.length})
                     </h3>
-                    <button id="btn-show-stations-map" class="btn-small-action">
-                        <i class="fas fa-map-marked-alt"></i> Voir sur la carte
-                    </button>
                 </div>
                 <div class="stations-list">
                     ${listItems}
@@ -417,16 +499,13 @@ export class ModalComponent {
     const btn = this.container.querySelector("#footer-fav-btn");
     if (!btn || !this.currentOffer) return;
     const icon = btn.querySelector("i");
-    const text = btn.querySelector("span");
 
     if (this.favManager.isFavorite(this.currentOffer.offerId)) {
       icon.className = "fas fa-heart";
       btn.classList.add("is-active");
-      text.textContent = "Retiré";
     } else {
       icon.className = "far fa-heart";
       btn.classList.remove("is-active");
-      text.textContent = "Favori";
     }
   }
 
@@ -437,5 +516,62 @@ export class ModalComponent {
    */
   setOnItineraryClick(callback) {
     this.onItineraryCallback = callback;
+  }
+  
+  /**
+   * Exporte une offre individuelle dans le format spécifié
+   * @param {Object} offer - L'offre à exporter
+   * @param {Object} companyInfo - Informations sur l'entreprise
+   * @param {string} format - Le format d'export ('txt', 'json', ou 'csv')
+   * @private
+   */
+  #exportOffer(offer, companyInfo, format = 'txt') {
+    if (!offer) return;
+    
+    const companyName = companyInfo?.company || offer.company || "Entreprise";
+    const offerData = [{
+      companyName: companyName,
+      offerName: offer.title,
+      applyUrl: offer.applyUrl || ""
+    }];
+    
+    let content, mimeType, extension;
+    
+    switch (format) {
+      case 'txt':
+        content = `Nom de l'entreprise : ${offerData[0].companyName}\n` +
+                  `Nom de l'offre : ${offerData[0].offerName}\n` +
+                  `Url pour postuler : ${offerData[0].applyUrl}\n`;
+        mimeType = 'text/plain';
+        extension = 'txt';
+        break;
+      case 'json':
+        content = JSON.stringify(offerData, null, 2);
+        mimeType = 'application/json';
+        extension = 'json';
+        break;
+      case 'csv':
+        const headers = ['companyName', 'offerName', 'applyUrl'];
+        const rows = offerData.map(data =>
+          `"${data.companyName.replace(/"/g, '""')}","${data.offerName.replace(/"/g, '""')}","${data.applyUrl.replace(/"/g, '""')}"`
+        );
+        content = [headers.join(','), ...rows].join('\n');
+        mimeType = 'text/csv';
+        extension = 'csv';
+        break;
+      default:
+        return;
+    }
+    
+    // Déclencher le téléchargement du fichier
+    const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `offre-${offerData[0].offerName.substring(0, 30).replace(/[^a-z0-9]/gi, '_')}.${extension}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 }

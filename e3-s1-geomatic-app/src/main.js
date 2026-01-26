@@ -93,29 +93,34 @@ async function preloadResources() {
     const geoJson = dataManager.getCompanies();
 
     mapManager.addCompanyMarkers(geoJson, async (companyProps) => {
-      const offers = await dataManager.getOffersByStorageId(
-        companyProps.storage_id,
-      );
-      if (offers.length === 0) {
-        alert("Aucune offre détaillée trouvée pour cette entreprise.");
-        return;
-      }
+     const offers = await dataManager.getOffersByStorageId(
+       companyProps.storage_id,
+     );
+     if (offers.length === 0) {
+       alert("Aucune offre détaillée trouvée pour cette entreprise.");
+       return;
+     }
 
-      uiManager.jobModal.openOfferList(
-        companyProps,
-        offers,
-        async (selectedOffer) => {
-          const stations = await dataManager.getStationsForCompany(
-            companyProps.storage_id,
-          );
-          uiManager.jobModal.openOfferDetail(
-            selectedOffer,
-            companyProps,
-            stations,
-          );
-        },
-      );
-    });
+     uiManager.jobModal.openOfferList(
+       companyProps,
+       offers,
+       async (selectedOffer) => {
+         const stations = await dataManager.getStationsForCompany(
+           companyProps.storage_id,
+         );
+         uiManager.jobModal.openOfferDetail(
+           selectedOffer,
+           companyProps,
+           stations,
+         );
+       },
+     );
+   });
+   
+   // Connecter le modal au UIManager pour gérer la visibilité
+   uiManager.jobModal.onVisibilityChange = (isVisible) => {
+     uiManager.handleComponentVisibility(isVisible ? uiManager.jobModal : null);
+   };
 
     uiManager.searchComponent.setOnMarkerClick(async (companyProps) => {
       const offers = await dataManager.getOffersByStorageId(

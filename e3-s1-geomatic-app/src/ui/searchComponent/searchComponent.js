@@ -3,7 +3,8 @@
  * Se présente sous forme d'un volet dépliable contenant une barre de recherche textuelle
  * et un ensemble de filtres avancés (secteur, taille, rayon, score de transport).
  * Interagit directement avec le DataManager pour filtrer les données et le MapManager pour l'affichage.
- * * Dépendances :
+ *
+ * Dépendances :
  * @param {string} parentId - L'ID de l'élément DOM parent (ex: 'ui-layer').
  * @param {Object} mapManager - Instance du gestionnaire de carte (pour le rayon et les marqueurs).
  * @param {Object} dataManager - Instance du gestionnaire de données (pour le filtrage réel).
@@ -34,6 +35,7 @@ export class SearchComponent {
     };
 
     this.debounceSearch = null;
+    this.resultsCountClickListener = null;
   }
 
   /**
@@ -125,6 +127,23 @@ export class SearchComponent {
    * @private
    */
   async #applyFilters() {
+    // Vérifier que toutes les dépendances sont initialisées
+    if (!this.dataManager || !this.mapManager) {
+      return;
+    }
+
+    // Forcer l'initialisation des offres si ce n'est pas déjà fait
+    if (!this.dataManager.offersCache) {
+      // Appeler la méthode privée via une méthode publique existante
+      try {
+        // On appelle getOffersByStorageId avec un ID qui n'existe pas
+        // Cela va déclencher le chargement du cache sans erreur
+        await this.dataManager.getOffersByStorageId("");
+      } catch (e) {
+        // Ignorer les erreurs d'initialisation
+      }
+    }
+
     if (this.mapManager && this.mapManager.userPosition) {
       this.filters.userPosition = this.mapManager.userPosition;
     }
@@ -134,6 +153,11 @@ export class SearchComponent {
     const filteredGeoJson = await this.dataManager.filterCompanies(
       this.filters,
     );
+
+    // Mettre à jour le composant de résultats
+    if (window.uiManager && window.uiManager.resultsComponent) {
+      window.uiManager.resultsComponent.updateResults(filteredGeoJson, this.filters.text);
+    }
 
     this.mapManager.updateMarkers(filteredGeoJson, (companyProps) => {
       if (this.onMarkerClickCallback) {
@@ -164,6 +188,31 @@ export class SearchComponent {
     } else {
       icon.classList.remove("pulse-active");
     }
+  }
+
+  /**
+   * Méthode privée. Met à jour l'affichage du nombre de résultats.
+   * @param {number} count - Le nombre de résultats.
+   * @returns {void}
+   * @private
+   */
+  #updateResultsCount(count) {
+    const resultsCountContainer = this.element.querySelector(".results-count-container");
+    const resultsCountText = this.element.querySelector("#results-count-text");
+    
+    if (resultsCountContainer && resultsCountText) {
+      resultsCountText.textContent = `${count} résultat${count > 1 ? 's' : ''}`;
+      resultsCountContainer.style.display = "block";
+    }
+  }
+
+  /**
+   * Méthode publique pour mettre à jour le nombre de résultats affiché.
+   * @param {number} count - Le nombre de résultats.
+   * @returns {void}
+   */
+  updateResultsCount(count) {
+    this.#updateResultsCount(count);
   }
 
   /**
@@ -214,6 +263,9 @@ export class SearchComponent {
     }
 
     if (this.onExpand) this.onExpand();
+    
+    // Appliquer les filtres initiaux pour afficher le nombre de résultats
+    this.#applyFilters();
   }
 
   /**
@@ -422,6 +474,10 @@ export class SearchComponent {
                     </div>
                 </div>
             </details>
+            
+            <div class="results-count-container" style="padding: 15px; text-align: center; font-size: 0.9rem; color: #3498db; cursor: pointer; border-top: 1px solid #eee; margin-top: 10px; display: none;">
+                <span id="results-count-text"></span>
+            </div>
         `;
 
     this.#bindDynamicEvents(container);
@@ -645,6 +701,28 @@ export class SearchComponent {
         }
         this.#applyFilters();
       });
-    });
-  }
+   });
+   
+   // Ajouter l'écouteur d'événements pour le clic sur le compteur de résultats
+   const resultsCountContainer = container.querySelector(".results-count-container");
+   if (resultsCountContainer) {
+     // Supprimer l'écouteur existant s'il y en a un
+     if (this.resultsCountClickListener) {
+       resultsCountContainer.removeEventListener("click", this.resultsCountClickListener);
+     }
+     
+     // Créer un nouvel écouteur
+     this.resultsCountClickListener = () => {
+       // Fermer le widget de recherche
+       this.collapse();
+       
+       // Ouvrir le widget de résultats
+       setTimeout(() => {
+         document.querySelector(".res-header").click();
+       }, 400); // Attendre que le widget de recherche soit complètement fermé
+     };
+     
+     resultsCountContainer.addEventListener("click", this.resultsCountClickListener);
+   }
+ }
 }

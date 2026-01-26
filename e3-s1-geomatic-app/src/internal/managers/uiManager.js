@@ -18,19 +18,25 @@ import { UserLocationComponent } from "../../ui/userLocalisationComponent/userLo
  */
 export class UIManager {
   constructor(mapManager, favManager, dataManger) {
-    this.mapManager = mapManager;
-    this.favManager = favManager;
-    this.dataManger = dataManger;
+  this.mapManager = mapManager;
+  this.favManager = favManager;
+  this.dataManger = dataManger;
 
-    this.searchComponent = null;
-    this.favoritesComponent = null;
-    this.resultsComponent = null;
-    this.jobModal = null;
-    this.navComponent = null;
-    this.transportComponent = null;
-    this.routeComponent = null;
-    this.userLocationComponent = null;
-  }
+  this.searchComponent = null;
+  this.favoritesComponent = null;
+  this.resultsComponent = null;
+  this.jobModal = null;
+  this.navComponent = null;
+  this.transportComponent = null;
+  this.routeComponent = null;
+  this.userLocationComponent = null;
+  
+  // Suivi de l'état d'ouverture des composants
+  this.activeComponent = null;
+  
+  // Suivi de l'état du widget de transport
+  this.wasTransportWidgetVisible = true;
+}
 
   /**
    * Initialise tous les composants UI, les injecte dans le DOM et configure
@@ -113,47 +119,92 @@ export class UIManager {
    * et l'arrière-plan peut être flouté pour améliorer la lisibilité.
    * @returns {void}
    */
+  /**
+  * Gère la visibilité des composants en fonction du composant actif
+  * Cache les autres composants quand un composant est ouvert
+  * @param {Object|null} activeWidget - Le composant actif ou null si aucun
+  * @returns {void}
+  */
+ handleComponentVisibility(activeWidget) {
+   const widgets = [
+     this.searchComponent,
+     this.favoritesComponent,
+     this.resultsComponent,
+   ];
+
+   if (activeWidget) {
+     // Un composant est actif, cacher les autres composants principaux
+     widgets.forEach((widget) => {
+       if (widget && widget !== activeWidget) {
+         if (widget.element) {
+           widget.element.classList.add("widget-hidden");
+         }
+       }
+     });
+     
+     // Cacher également le widget de transport et mémoriser son état
+     const transportWidget = document.querySelector('.transport-widget');
+     if (transportWidget) {
+       // Mémoriser si le widget était visible avant de le cacher
+       this.wasTransportWidgetVisible = !transportWidget.classList.contains('widget-hidden');
+       transportWidget.classList.add('widget-hidden');
+     }
+     
+     // Cacher aussi les composants de navigation
+     /* Finalement, on garde celui-ci visible:  if (this.navComponent) this.navComponent.hide(); */
+     if (this.userLocationComponent) this.userLocationComponent.hide();
+   } else {
+     // Aucun composant actif, afficher tous les composants principaux
+     widgets.forEach((widget) => {
+       if (widget && widget.element) {
+         widget.element.classList.remove("widget-hidden");
+       }
+     });
+     
+     // Réafficher le widget de transport seulement s'il était visible avant
+     const transportWidget = document.querySelector('.transport-widget');
+     if (transportWidget && this.wasTransportWidgetVisible) {
+       transportWidget.classList.remove('widget-hidden');
+     }
+     
+     // Réafficher les composants de navigation
+     /* if (this.navComponent) this.navComponent.show(); */
+     if (this.userLocationComponent) this.userLocationComponent.show();
+   }
+   
+   // Mettre à jour l'état du composant actif
+   this.activeComponent = activeWidget;
+ }
+
   setupFocusMode() {
-    const widgets = [
-      this.searchComponent,
-      this.favoritesComponent,
-      this.resultsComponent,
-    ];
+   const widgets = [
+     this.searchComponent,
+     this.favoritesComponent,
+     this.resultsComponent,
+   ];
 
-    widgets.forEach((widget) => {
-      if (!widget) return;
+   widgets.forEach((widget) => {
+     if (!widget) return;
 
-      widget.onExpand = () => {
-        widgets.forEach((w) => {
-          if (w !== widget) {
-            w.collapse();
-            if (w.element) w.element.classList.add("widget-hidden");
-          }
-        });
-        if (this.navComponent) this.navComponent.hide();
-        if (this.userLocationComponent) this.userLocationComponent.hide();
+     widget.onExpand = () => {
+       // Gérer la visibilité des composants
+       this.handleComponentVisibility(widget);
+       
+       document.body.classList.add("focus-mode");
+     };
 
-        document.body.classList.add("focus-mode");
-      };
-
-      widget.onCollapse = () => {
-        setTimeout(() => {
-          if (widgets.every((w) => !w.isExpanded)) {
-            document.body.classList.remove("focus-mode");
-
-            widgets.forEach((w) => {
-              if (w !== widget && w.element) {
-                w.element.classList.remove("widget-hidden");
-              }
-            });
-            if (this.navComponent) this.navComponent.show();
-
-            if (this.userLocationComponent) this.userLocationComponent.show();
-          }
-        }, 200);
-      };
-    });
-  }
+     widget.onCollapse = () => {
+       setTimeout(() => {
+         if (widgets.every((w) => !w.isExpanded)) {
+           document.body.classList.remove("focus-mode");
+           
+           // Réafficher tous les composants
+           this.handleComponentVisibility(null);
+         }
+       }, 200);
+     };
+   });
+ }
 
   /**
    * Crée et affiche un bouton flottant permettant de quitter le mode itinéraire.

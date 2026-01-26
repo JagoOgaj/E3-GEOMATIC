@@ -138,6 +138,11 @@ export class ResultsComponent {
     this.currentTextFilter = textFilter;
     this.renderedCount = 0;
     this.#updateHeader();
+    
+    // Mettre à jour le nombre de résultats dans le widget de recherche
+    if (this.searchComponent && typeof this.searchComponent.updateResultsCount === 'function') {
+      this.searchComponent.updateResultsCount(this.allCompanies.length);
+    }
 
     const container = this.element.querySelector(".res-content");
     container.innerHTML = "";
@@ -567,9 +572,11 @@ export class ResultsComponent {
         content = exportData
           .map(
             (item) =>
-              `Entreprise: ${item.companyName}\nOffre: ${item.offerName}\nLien: ${item.applyUrl}\n`,
+              `Nom de l'entreprise : ${item.companyName}\n` +
+              `Nom de l'offre : ${item.offerName}\n` +
+              `Url pour postuler : ${item.applyUrl}\n`,
           )
-          .join("\n----------------\n");
+          .join("\n");
         mimeType = "text/plain";
         extension = "txt";
         break;
