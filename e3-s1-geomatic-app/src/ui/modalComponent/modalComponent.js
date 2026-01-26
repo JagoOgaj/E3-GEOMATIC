@@ -276,7 +276,7 @@ export class ModalComponent {
 
       stationsHtml = `
             <div class="detail-section">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom: 2px solid #f1f3f5; padding-bottom: 8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:36px; margin-bottom:12px; border-bottom: 2px solid #f1f3f5; padding-bottom: 8px;">
                     <h3 class="section-title" style="border:none; margin:0; padding:0;">
                         <i class="fas fa-map-signs"></i> Transports (${stations.length})
                     </h3>
