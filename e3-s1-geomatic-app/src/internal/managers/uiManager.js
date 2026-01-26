@@ -18,22 +18,25 @@ import { UserLocationComponent } from "../../ui/userLocalisationComponent/userLo
  */
 export class UIManager {
   constructor(mapManager, favManager, dataManger) {
-   this.mapManager = mapManager;
-   this.favManager = favManager;
-   this.dataManger = dataManger;
+  this.mapManager = mapManager;
+  this.favManager = favManager;
+  this.dataManger = dataManger;
 
-   this.searchComponent = null;
-   this.favoritesComponent = null;
-   this.resultsComponent = null;
-   this.jobModal = null;
-   this.navComponent = null;
-   this.transportComponent = null;
-   this.routeComponent = null;
-   this.userLocationComponent = null;
-   
-   // Suivi de l'état d'ouverture des composants
-   this.activeComponent = null;
- }
+  this.searchComponent = null;
+  this.favoritesComponent = null;
+  this.resultsComponent = null;
+  this.jobModal = null;
+  this.navComponent = null;
+  this.transportComponent = null;
+  this.routeComponent = null;
+  this.userLocationComponent = null;
+  
+  // Suivi de l'état d'ouverture des composants
+  this.activeComponent = null;
+  
+  // Suivi de l'état du widget de transport
+  this.wasTransportWidgetVisible = true;
+}
 
   /**
    * Initialise tous les composants UI, les injecte dans le DOM et configure
@@ -130,7 +133,7 @@ export class UIManager {
    ];
 
    if (activeWidget) {
-     // Un composant est actif, cacher les autres
+     // Un composant est actif, cacher les autres composants principaux
      widgets.forEach((widget) => {
        if (widget && widget !== activeWidget) {
          if (widget.element) {
@@ -139,16 +142,30 @@ export class UIManager {
        }
      });
      
+     // Cacher également le widget de transport et mémoriser son état
+     const transportWidget = document.querySelector('.transport-widget');
+     if (transportWidget) {
+       // Mémoriser si le widget était visible avant de le cacher
+       this.wasTransportWidgetVisible = !transportWidget.classList.contains('widget-hidden');
+       transportWidget.classList.add('widget-hidden');
+     }
+     
      // Cacher aussi les composants de navigation
      /* Finalement, on garde celui-ci visible:  if (this.navComponent) this.navComponent.hide(); */
      if (this.userLocationComponent) this.userLocationComponent.hide();
    } else {
-     // Aucun composant actif, afficher tous les composants
+     // Aucun composant actif, afficher tous les composants principaux
      widgets.forEach((widget) => {
        if (widget && widget.element) {
          widget.element.classList.remove("widget-hidden");
        }
      });
+     
+     // Réafficher le widget de transport seulement s'il était visible avant
+     const transportWidget = document.querySelector('.transport-widget');
+     if (transportWidget && this.wasTransportWidgetVisible) {
+       transportWidget.classList.remove('widget-hidden');
+     }
      
      // Réafficher les composants de navigation
      /* if (this.navComponent) this.navComponent.show(); */
