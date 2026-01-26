@@ -35,6 +35,7 @@ export class SearchComponent {
     };
 
     this.debounceSearch = null;
+    this.resultsCountClickListener = null;
   }
 
   /**
@@ -709,15 +710,23 @@ export class SearchComponent {
    // Ajouter l'écouteur d'événements pour le clic sur le compteur de résultats
    const resultsCountContainer = container.querySelector(".results-count-container");
    if (resultsCountContainer) {
-     resultsCountContainer.addEventListener("click", () => {
+     // Supprimer l'écouteur existant s'il y en a un
+     if (this.resultsCountClickListener) {
+       resultsCountContainer.removeEventListener("click", this.resultsCountClickListener);
+     }
+     
+     // Créer un nouvel écouteur
+     this.resultsCountClickListener = () => {
        // Fermer le widget de recherche
        this.collapse();
        
-       // Ouvrir le widget de résultats si disponible
-       if (window.uiManager && window.uiManager.resultsComponent) {
-         window.uiManager.resultsComponent.expand();
-       }
-     });
+       // Ouvrir le widget de résultats
+       setTimeout(() => {
+         document.querySelector(".res-header").click();
+       }, 400); // Attendre que le widget de recherche soit complètement fermé
+     };
+     
+     resultsCountContainer.addEventListener("click", this.resultsCountClickListener);
    }
  }
 }
