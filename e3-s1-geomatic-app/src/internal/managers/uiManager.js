@@ -124,10 +124,12 @@ export class UIManager {
       if (!widget) return;
 
       widget.onExpand = () => {
+        // Ne plus ajouter la classe "widget-hidden" aux autres widgets
+        // Cela désactive les événements de souris et rend les widgets non cliquables
         widgets.forEach((w) => {
           if (w !== widget) {
+            // On collapse simplement les autres widgets sans les rendre invisibles
             w.collapse();
-            if (w.element) w.element.classList.add("widget-hidden");
           }
         });
         if (this.navComponent) this.navComponent.hide();
@@ -141,8 +143,9 @@ export class UIManager {
           if (widgets.every((w) => !w.isExpanded)) {
             document.body.classList.remove("focus-mode");
 
+            // S'assurer que la classe "widget-hidden" est retirée pour restaurer la fonctionnalité
             widgets.forEach((w) => {
-              if (w !== widget && w.element) {
+              if (w.element) {
                 w.element.classList.remove("widget-hidden");
               }
             });

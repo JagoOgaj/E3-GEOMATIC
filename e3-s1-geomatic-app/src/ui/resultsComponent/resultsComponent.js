@@ -567,9 +567,11 @@ export class ResultsComponent {
         content = exportData
           .map(
             (item) =>
-              `Entreprise: ${item.companyName}\nOffre: ${item.offerName}\nLien: ${item.applyUrl}\n`,
+              `Nom de l'entreprise : ${item.companyName}\n` +
+              `Nom de l'offre : ${item.offerName}\n` +
+              `Url pour postuler : ${item.applyUrl}\n`,
           )
-          .join("\n----------------\n");
+          .join("\n");
         mimeType = "text/plain";
         extension = "txt";
         break;

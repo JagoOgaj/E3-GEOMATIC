@@ -3,7 +3,8 @@
  * Se présente sous forme d'un volet dépliable contenant une barre de recherche textuelle
  * et un ensemble de filtres avancés (secteur, taille, rayon, score de transport).
  * Interagit directement avec le DataManager pour filtrer les données et le MapManager pour l'affichage.
- * * Dépendances :
+ *
+ * Dépendances :
  * @param {string} parentId - L'ID de l'élément DOM parent (ex: 'ui-layer').
  * @param {Object} mapManager - Instance du gestionnaire de carte (pour le rayon et les marqueurs).
  * @param {Object} dataManager - Instance du gestionnaire de données (pour le filtrage réel).

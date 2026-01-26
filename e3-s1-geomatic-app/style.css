@@ -128,7 +128,8 @@ html {
 
 .widget-hidden {
   opacity: 0 !important;
-  pointer-events: none;
+  /* Supprimé pointer-events: none pour permettre les interactions */
+  /* pointer-events: none; */
 
   transform: scale(0.95) translateY(20px) !important;
 
@@ -142,8 +143,9 @@ html {
 }
 
 .focus-mode #map {
-  filter: blur(5px) grayscale(0.4) brightness(0.9);
-  transform: scale(1.03);
+  /* Pas d'effet de flou : intéragir avec la carte est possible quand le modal est ouvert */
+  filter: none;
+  transform: none;
 }
 
 .leaflet-div-icon {
