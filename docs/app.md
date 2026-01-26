@@ -29,8 +29,8 @@ e3-s1-geomatic-app/
     │   │   └── uiManager.js   # Orchestrateur de l'interface utilisateur
     │   └── utils/
     │       ├── const.js       # Constantes
-    │       ├── minHeap.js     # Implémentation d'un tas minimal
-    │       └── distance.js    # Algorithme de recherche de chemin
+    │       ├── distance.js    # Fonctions pour calcul de distance
+    │       └── minHeap.js     # Implémentation d'un tas minimal
     └── ui/
         ├── favoriteComponent/ # Composant des favoris
         │   ├── favoritesComponent.js
@@ -150,15 +150,60 @@ Trois formats d'export sont disponibles pour les deux composants :
 - **Détails itinéraire** : Affichage du trajet calculé avec étapes et temps estimé
 
 ### Calcul d'itinéraire
-- Calcul d'itinéraire entre la position utilisateur et une entreprise
-- Affichage du tracé sur la carte
-- Détails de l'itinéraire avec arrêts et correspondances
 
-#### PathFinder
-Implémente l'algorithme A* pour le calcul d'itinéraire :
-- Utilisation d'un graphe de transport pré-calculé
-- Optimisation avec tas min (MinHeap)
-- Calcul du chemin le plus court entre deux points
+Le système de calcul d'itinéraire permet de déterminer le trajet optimal en transport en commun entre la position de l'utilisateur et une entreprise cible.
+
+#### Architecture du système
+
+1. **PathFinder** (`src/internal/managers/pathFinder.js`) : Calculateur d'itinéraire principal
+2. **MapManager** (`src/internal/managers/mapManager.js`) : Gestion de l'affichage cartographique
+3. **RouteDetailsComponent** (`src/ui/routeDetailsComponent/routeDetailsComponent.js`) : Affichage détaillé du trajet
+
+#### Données utilisées
+
+Le calcul utilise un graphe de transport pré-calculé (`graph.json`) fait par le Parser à partir des données GTFS. Il a :
+- **Noeuds** : Stations de transport avec coordonnées géographiques
+- **Arêtes** : Connexions entre stations avec poids (temps de trajet) et métadonnées (ligne, type de transport)
+
+#### Algorithme A* optimisé
+
+Le PathFinder implémente une version adaptée de l'algorithme A* avec les optimisations suivantes :
+
+**Heuristique géographique** :
+- Utilisation de la distance haversine (aérienne) entre le noeud courant et la destination
+
+**Gestion des correspondances** :
+- Pénalité de 300 secondes pour les changements de ligne non nécessaires
+- Conservation du contexte de ligne pour éviter les changements inutiles
+
+**Optimisations de performance** :
+- **Tas minimal (MinHeap)** : Structure de données pour extraire efficacement le nœud avec le coût minimal
+- **Limite d'itérations** : 50 000 itérations maximum pour éviter les boucles infinies
+- **Recherche spatiale** : Boîte de délimitation (0.1°) pour trouver les noeuds les plus proches
+
+**Consolidation du chemin** :
+- Regroupement des arrêts consécutifs sur la même ligne
+- Simplification de l'affichage pour l'utilisateur
+- Calcul du nombre d'arrêts par segment
+
+#### Détail du calcul
+
+1. **Initialisation** : Chargement asynchrone du fichier `graph.json` via `fetch()`
+
+2. **Recherche des noeuds de départ et d'arrivée** :
+   - Trouver le noeud le plus proche de la position utilisateur dans un rayon de 0.1°
+   - Trouver le noeud le plus proche des coordonnées de l'entreprise
+
+3. **Exécution de l'algorithme A*** :
+   - Initialisation des structures : `costSoFar`, `cameFrom`, `frontier` (MinHeap)
+   - Exploration itérative des voisins avec calcul des coûts
+   - Application des pénalités pour les correspondances
+   - Reconstruction du chemin optimal
+
+4. **Post-traitement** :
+   - Consolidation des segments de même ligne
+   - Calcul de la durée totale
+   - Formatage des données pour l'affichage
 
 ## Flux d'interaction utilisateur
 

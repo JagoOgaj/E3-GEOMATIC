@@ -254,7 +254,7 @@ export class UserLocationComponent {
 
     document.getElementById("map").style.cursor = "";
 
-    // Remove hover event listeners
+    // Retirer les listeners de hover
     this.element.removeEventListener('mouseenter', this.boundHideLoupeOnHover);
     this.element.removeEventListener('mouseleave', this.boundShowLoupeOnHover);
     this.gpsBtn.removeEventListener('mouseenter', this.boundHideLoupeOnHover);
