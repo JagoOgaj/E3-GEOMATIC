@@ -1,6 +1,6 @@
 import { CONFIG } from "../config/config.js";
+import { getDist } from "../utils/distance.js";
 import { MinHeap } from "../utils/minHeap.js";
-import { getDist } from "../utils/pathFinder.js";
 
 /**
  * Classe responsable du calcul d'itinéraires multimodaux.
