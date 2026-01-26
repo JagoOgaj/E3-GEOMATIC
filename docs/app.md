@@ -177,7 +177,7 @@ Le PathFinder implémente une version adaptée de l'algorithme A* avec les optim
 - Conservation du contexte de ligne pour éviter les changements inutiles
 
 **Optimisations de performance** :
-- **Tas minimal (MinHeap)** : Structure de données pour extraire efficacement le nœud avec le coût minimal
+- **Tas minimal (MinHeap)** : Structure de données pour extraire efficacement le noeud avec le coût minimal
 - **Limite d'itérations** : 50 000 itérations maximum pour éviter les boucles infinies
 - **Recherche spatiale** : Boîte de délimitation (0.1°) pour trouver les noeuds les plus proches
 
