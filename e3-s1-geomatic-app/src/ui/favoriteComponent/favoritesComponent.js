@@ -12,8 +12,8 @@ export class FavoritesComponent {
     this.favManager = favManager;
     this.isExpanded = false;
     this.element = null;
-    
-    this.favorites = []; 
+
+    this.favorites = [];
 
     this.onExpand = null;
     this.onCollapse = null;
@@ -28,7 +28,7 @@ export class FavoritesComponent {
   init() {
     this.element = document.createElement("div");
     this.element.className = "favorites-widget";
-    
+
     this.element.innerHTML = `
         <div class="fav-header">
             <button class="fav-icon-btn"><i class="far fa-star"></i></button>
@@ -61,7 +61,7 @@ export class FavoritesComponent {
     this.#renderList(this.favManager.getFavorites());
 
     this.favManager.subscribe((newFavorites) => {
-        this.#renderList(newFavorites);
+      this.#renderList(newFavorites);
     });
   }
 
@@ -76,7 +76,7 @@ export class FavoritesComponent {
     const closeBtn = this.element.querySelector(".fav-close-btn");
 
     header.addEventListener("click", (e) => {
-      if (e.target.closest('.fav-close-btn')) return;
+      if (e.target.closest(".fav-close-btn")) return;
 
       if (!this.isExpanded) this.expand();
       else this.collapse();
@@ -87,31 +87,27 @@ export class FavoritesComponent {
       this.collapse();
     });
 
-    // Fonctionnalité du bouton d'export
-    const exportBtn = this.element.querySelector('.btn-export');
-    const exportMenu = this.element.querySelector('.fav-export-menu');
-    const exportOptions = this.element.querySelectorAll('.export-option');
+    const exportBtn = this.element.querySelector(".btn-export");
+    const exportMenu = this.element.querySelector(".fav-export-menu");
+    const exportOptions = this.element.querySelectorAll(".export-option");
 
-    // Afficher/masquer le menu d'export lors du clic sur le bouton
-    exportBtn.addEventListener('click', (e) => {
+    exportBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      exportMenu.classList.toggle('active');
+      exportMenu.classList.toggle("active");
     });
 
-    // Gérer les clics sur les options d'export
-    exportOptions.forEach(option => {
-      option.addEventListener('click', (e) => {
+    exportOptions.forEach((option) => {
+      option.addEventListener("click", (e) => {
         e.stopPropagation();
         const format = e.target.dataset.format;
         this.#exportFavorites(format);
-        exportMenu.classList.remove('active');
+        exportMenu.classList.remove("active");
       });
     });
 
-    // Fermer le menu d'export lorsqu'on clique ailleurs
-    document.addEventListener('click', (e) => {
+    document.addEventListener("click", (e) => {
       if (exportMenu && !exportMenu.contains(e.target)) {
-        exportMenu.classList.remove('active');
+        exportMenu.classList.remove("active");
       }
     });
   }
@@ -123,47 +119,51 @@ export class FavoritesComponent {
    */
   #exportFavorites(format) {
     const favorites = this.favManager.getFavorites();
-    
+
     if (favorites.length === 0) return;
 
     let content, mimeType, extension;
 
     switch (format) {
-      case 'txt':
-        content = favorites.map(fav =>
-          `Nom de l'entreprise : ${fav.company}\n` +
-          `Nom de l'offre : ${fav.title}\n` +
-          `Url pour postuler : ${fav.applyUrl}\n`
-        ).join('\n');
-        mimeType = 'text/plain';
-        extension = 'txt';
+      case "txt":
+        content = favorites
+          .map(
+            (fav) =>
+              `Nom de l'entreprise : ${fav.company}\n` +
+              `Nom de l'offre : ${fav.title}\n` +
+              `Url pour postuler : ${fav.applyUrl}\n`,
+          )
+          .join("\n");
+        mimeType = "text/plain";
+        extension = "txt";
         break;
-      case 'json':
-        // Préparer les données avec les mêmes noms de champs que dans le composant de résultats
-        const exportData = favorites.map(fav => ({
+      case "json":
+        const exportData = favorites.map((fav) => ({
           companyName: fav.company,
           offerName: fav.title,
-          applyUrl: fav.applyUrl
+          applyUrl: fav.applyUrl,
         }));
         content = JSON.stringify(exportData, null, 2);
-        mimeType = 'application/json';
-        extension = 'json';
+        mimeType = "application/json";
+        extension = "json";
         break;
-      case 'csv':
-        const headers = ['companyName', 'offerName', 'applyUrl'];
-        const rows = favorites.map(fav => `"${fav.company.replace(/"/g, '""')}","${fav.title.replace(/"/g, '""')}","${fav.applyUrl.replace(/"/g, '""')}"`);
-        content = [headers.join(','), ...rows].join('\n');
-        mimeType = 'text/csv';
-        extension = 'csv';
+      case "csv":
+        const headers = ["companyName", "offerName", "applyUrl"];
+        const rows = favorites.map(
+          (fav) =>
+            `"${fav.company.replace(/"/g, '""')}","${fav.title.replace(/"/g, '""')}","${fav.applyUrl.replace(/"/g, '""')}"`,
+        );
+        content = [headers.join(","), ...rows].join("\n");
+        mimeType = "text/csv";
+        extension = "csv";
         break;
       default:
         return;
     }
 
-    // Déclencher le téléchargement du fichier
     const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = `favoris.${extension}`;
     document.body.appendChild(link);
@@ -181,8 +181,8 @@ export class FavoritesComponent {
     if (this.isExpanded) return;
     this.isExpanded = true;
     this.element.classList.add("expanded");
-    
-    this.#renderList(); 
+
+    this.#renderList();
 
     if (this.onExpand) this.onExpand();
   }
@@ -210,7 +210,7 @@ export class FavoritesComponent {
    */
   #renderList(newList = null) {
     if (newList) {
-        this.favorites = newList;
+      this.favorites = newList;
     }
 
     const listContainer = this.element.querySelector(".fav-list");
@@ -218,11 +218,11 @@ export class FavoritesComponent {
     const starIcon = this.element.querySelector(".fav-icon-btn i");
 
     if (this.favorites.length > 0) {
-        starIcon.className = "fas fa-star"; 
-        starIcon.style.color = "#f1c40f";   
+      starIcon.className = "fas fa-star";
+      starIcon.style.color = "#f1c40f";
     } else {
-        starIcon.className = "far fa-star"; 
-        starIcon.style.color = "";          
+      starIcon.className = "far fa-star";
+      starIcon.style.color = "";
     }
 
     if (titleCount) titleCount.textContent = this.favorites.length;
@@ -255,7 +255,7 @@ export class FavoritesComponent {
                     </button>
                 </div>
             </div>
-        `
+        `,
       )
       .join("");
 
@@ -263,9 +263,9 @@ export class FavoritesComponent {
 
     listContainer.querySelectorAll(".btn-delete").forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        e.stopPropagation(); 
+        e.stopPropagation();
         const item = e.target.closest(".fav-item");
-        const id = item.dataset.id; 
+        const id = item.dataset.id;
 
         this.favManager.removeFavorite(id);
       });
@@ -273,26 +273,26 @@ export class FavoritesComponent {
 
     listContainer.querySelectorAll(".btn-view").forEach((btn) => {
       btn.addEventListener("click", (e) => {
-        e.stopPropagation(); 
-        
+        e.stopPropagation();
+
         const url = btn.dataset.url;
         if (url && url !== "undefined" && url !== "null") {
-            window.open(url, '_blank');
+          window.open(url, "_blank");
         } else {
-            alert("Lien de l'offre non disponible.");
+          alert("Lien de l'offre non disponible.");
         }
       });
     });
 
-     this.element.querySelectorAll(".fav-item").forEach(item => {
-        item.addEventListener("click", (e) => {
-            if (e.target.closest('.action-btn')) return;
+    this.element.querySelectorAll(".fav-item").forEach((item) => {
+      item.addEventListener("click", (e) => {
+        if (e.target.closest(".action-btn")) return;
 
-            const id = item.dataset.id;
-            if (this.onItemClick) {
-                this.onItemClick(id);
-            }
-        });
+        const id = item.dataset.id;
+        if (this.onItemClick) {
+          this.onItemClick(id);
+        }
+      });
     });
   }
 }

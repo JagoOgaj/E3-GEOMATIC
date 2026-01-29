@@ -127,21 +127,14 @@ export class SearchComponent {
    * @private
    */
   async #applyFilters() {
-    // Vérifier que toutes les dépendances sont initialisées
     if (!this.dataManager || !this.mapManager) {
       return;
     }
 
-    // Forcer l'initialisation des offres si ce n'est pas déjà fait
     if (!this.dataManager.offersCache) {
-      // Appeler la méthode privée via une méthode publique existante
       try {
-        // On appelle getOffersByStorageId avec un ID qui n'existe pas
-        // Cela va déclencher le chargement du cache sans erreur
         await this.dataManager.getOffersByStorageId("");
-      } catch (e) {
-        // Ignorer les erreurs d'initialisation
-      }
+      } catch (e) {}
     }
 
     if (this.mapManager && this.mapManager.userPosition) {
@@ -154,9 +147,11 @@ export class SearchComponent {
       this.filters,
     );
 
-    // Mettre à jour le composant de résultats
     if (window.uiManager && window.uiManager.resultsComponent) {
-      window.uiManager.resultsComponent.updateResults(filteredGeoJson, this.filters.text);
+      window.uiManager.resultsComponent.updateResults(
+        filteredGeoJson,
+        this.filters.text,
+      );
     }
 
     this.mapManager.updateMarkers(filteredGeoJson, (companyProps) => {
@@ -197,11 +192,13 @@ export class SearchComponent {
    * @private
    */
   #updateResultsCount(count) {
-    const resultsCountContainer = this.element.querySelector(".results-count-container");
+    const resultsCountContainer = this.element.querySelector(
+      ".results-count-container",
+    );
     const resultsCountText = this.element.querySelector("#results-count-text");
-    
+
     if (resultsCountContainer && resultsCountText) {
-      resultsCountText.textContent = `${count} résultat${count > 1 ? 's' : ''}`;
+      resultsCountText.textContent = `${count} résultat${count > 1 ? "s" : ""}`;
       resultsCountContainer.style.display = "block";
     }
   }
@@ -263,8 +260,7 @@ export class SearchComponent {
     }
 
     if (this.onExpand) this.onExpand();
-    
-    // Appliquer les filtres initiaux pour afficher le nombre de résultats
+
     this.#applyFilters();
   }
 
@@ -701,28 +697,31 @@ export class SearchComponent {
         }
         this.#applyFilters();
       });
-   });
-   
-   // Ajouter l'écouteur d'événements pour le clic sur le compteur de résultats
-   const resultsCountContainer = container.querySelector(".results-count-container");
-   if (resultsCountContainer) {
-     // Supprimer l'écouteur existant s'il y en a un
-     if (this.resultsCountClickListener) {
-       resultsCountContainer.removeEventListener("click", this.resultsCountClickListener);
-     }
-     
-     // Créer un nouvel écouteur
-     this.resultsCountClickListener = () => {
-       // Fermer le widget de recherche
-       this.collapse();
-       
-       // Ouvrir le widget de résultats
-       setTimeout(() => {
-         document.querySelector(".res-header").click();
-       }, 400); // Attendre que le widget de recherche soit complètement fermé
-     };
-     
-     resultsCountContainer.addEventListener("click", this.resultsCountClickListener);
-   }
- }
+    });
+
+    const resultsCountContainer = container.querySelector(
+      ".results-count-container",
+    );
+    if (resultsCountContainer) {
+      if (this.resultsCountClickListener) {
+        resultsCountContainer.removeEventListener(
+          "click",
+          this.resultsCountClickListener,
+        );
+      }
+
+      this.resultsCountClickListener = () => {
+        this.collapse();
+
+        setTimeout(() => {
+          document.querySelector(".res-header").click();
+        }, 400);
+      };
+
+      resultsCountContainer.addEventListener(
+        "click",
+        this.resultsCountClickListener,
+      );
+    }
+  }
 }

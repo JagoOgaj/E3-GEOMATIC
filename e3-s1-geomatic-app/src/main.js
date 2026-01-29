@@ -117,7 +117,6 @@ async function preloadResources() {
      );
    });
    
-   // Connecter le modal au UIManager pour gérer la visibilité
    uiManager.jobModal.onVisibilityChange = (isVisible) => {
      uiManager.handleComponentVisibility(isVisible ? uiManager.jobModal : null);
    };

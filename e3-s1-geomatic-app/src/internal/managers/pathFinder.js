@@ -25,9 +25,7 @@ export class PathFinder {
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       this.graph = await res.json();
       this.isReady = true;
-    } catch (e) {
-      // Gestion silencieuse de l'erreur
-    }
+    } catch (e) {}
   }
 
   /**

@@ -11,38 +11,36 @@
  */
 export class ModalComponent {
   constructor(favManager, mapManager, searchComponent) {
-   this.parent = document.body;
-   this.container = null;
-   this.currentOffer = null;
-   this.favManager = favManager;
-   this.mapManager = mapManager;
-   this.searchComponent = searchComponent;
+    this.parent = document.body;
+    this.container = null;
+    this.currentOffer = null;
+    this.favManager = favManager;
+    this.mapManager = mapManager;
+    this.searchComponent = searchComponent;
 
-   this.onShowStationsOnMap = null;
-   this.onItineraryCallback = null;
-   
-   // Callback pour notifier le UIManager du changement de visibilité
-   this.onVisibilityChange = null;
+    this.onShowStationsOnMap = null;
+    this.onItineraryCallback = null;
 
-   this.init();
- }
+    this.onVisibilityChange = null;
+
+    this.init();
+  }
 
   /**
    * Initialise le squelette HTML de la modale principale, l'injecte dans le document
    * et configure la fermeture automatique lors d'un clic sur l'overlay (fond sombre).
    */
   init() {
-    // Ne pas créer le container ici, seulement quand on en a besoin
     this.container = null;
   }
-  
+
   createContainer() {
     this.container = document.createElement("div");
     this.container.id = "offer-modal";
     this.container.className = "modal-wrapper hidden";
     this.container.innerHTML = `<div class="modal-content" id="modal-content-box"></div>`;
     this.parent.appendChild(this.container);
-    
+
     this.container.addEventListener("click", (e) => {
       if (e.target === this.container) this.hide();
     });
@@ -53,51 +51,47 @@ export class ModalComponent {
    * et met à jour les classes CSS pour l'animation de sortie.
    */
   hide() {
-   if (!this.container) return;
-   
-   this.container.classList.remove("hidden");
-   
-   this.container.classList.add("hidden");
-   document.body.style.overflow = "";
-   
-   // Notifier le UIManager que la modale est cachée
-   if (this.onVisibilityChange) {
-     this.onVisibilityChange(false);
-   }
-   
-   // Hide transports when modal is closed
-   if (this.mapManager && this.mapManager.clearStations) {
-     this.mapManager.clearStations();
-   }
-   
-   // Retirer complètement le modal du DOM quand il est caché
-   setTimeout(() => {
-     if (this.container && this.container.classList.contains("hidden")) {
-       this.container.remove();
-       this.container = null;
-     }
-   }, 300);
- }
+    if (!this.container) return;
+
+    this.container.classList.remove("hidden");
+
+    this.container.classList.add("hidden");
+    document.body.style.overflow = "";
+
+    if (this.onVisibilityChange) {
+      this.onVisibilityChange(false);
+    }
+
+    if (this.mapManager && this.mapManager.clearStations) {
+      this.mapManager.clearStations();
+    }
+
+    setTimeout(() => {
+      if (this.container && this.container.classList.contains("hidden")) {
+        this.container.remove();
+        this.container = null;
+      }
+    }, 300);
+  }
 
   /**
    * Affiche la modale principale sans bloquer le défilement de l'arrière-plan
    * et affiche les transports sur la carte.
    */
   show() {
-   if (!this.container) {
-     this.createContainer();
-   }
-   if (this.container) {
-     this.container.classList.remove("hidden");
-     // Ne pas bloquer le défilement pour permettre l'interaction avec la carte
-     document.body.style.overflow = "";
-     
-     // Notifier le UIManager que la modale est visible
-     if (this.onVisibilityChange) {
-       this.onVisibilityChange(true);
-     }
-   }
- }
+    if (!this.container) {
+      this.createContainer();
+    }
+    if (this.container) {
+      this.container.classList.remove("hidden");
+
+      document.body.style.overflow = "";
+
+      if (this.onVisibilityChange) {
+        this.onVisibilityChange(true);
+      }
+    }
+  }
 
   /**
    * Prépare et ouvre la vue détaillée d'une offre d'emploi spécifique.
@@ -111,7 +105,6 @@ export class ModalComponent {
    * @param {Array} [stations=[]] - Liste des stations de transport à proximité trouvées.
    */
   openOfferDetail(offer, companyInfo, stations = []) {
-    // S'assurer que le container existe avant de l'utiliser
     if (!this.container) {
       this.createContainer();
     }
@@ -172,19 +165,17 @@ export class ModalComponent {
         .addEventListener("click", () => this.hide());
     }
 
-    // Configuration du menu d'export
     const exportMenu = this.container.querySelector("#footer-export-menu");
     const exportBtn = this.container.querySelector("#footer-export-btn");
     const exportOptions = this.container.querySelectorAll(".export-option");
-    
+
     if (exportBtn && exportMenu) {
       exportBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         exportMenu.classList.toggle("active");
       });
-      
-      // Gérer les clics sur les options d'export
-      exportOptions.forEach(option => {
+
+      exportOptions.forEach((option) => {
         option.addEventListener("click", (e) => {
           e.stopPropagation();
           const format = e.target.dataset.format;
@@ -192,8 +183,7 @@ export class ModalComponent {
           exportMenu.classList.remove("active");
         });
       });
-      
-      // Fermer le menu d'export lorsqu'on clique ailleurs
+
       document.addEventListener("click", (e) => {
         if (exportMenu && !exportMenu.contains(e.target)) {
           exportMenu.classList.remove("active");
@@ -204,12 +194,11 @@ export class ModalComponent {
     this.#renderDetailBody(offer, stations);
     this.#setupFooterEvents();
     this.#updateFavoriteBtnState();
-    
-    // Afficher les transports sur la carte quand la modale s'ouvre
+
     if (this.mapManager && this.mapManager.displayStations) {
       this.mapManager.displayStations(stations);
     }
-    
+
     this.show();
   }
 
@@ -517,7 +506,7 @@ export class ModalComponent {
   setOnItineraryClick(callback) {
     this.onItineraryCallback = callback;
   }
-  
+
   /**
    * Exporte une offre individuelle dans le format spécifié
    * @param {Object} offer - L'offre à exporter
@@ -525,50 +514,53 @@ export class ModalComponent {
    * @param {string} format - Le format d'export ('txt', 'json', ou 'csv')
    * @private
    */
-  #exportOffer(offer, companyInfo, format = 'txt') {
+  #exportOffer(offer, companyInfo, format = "txt") {
     if (!offer) return;
-    
+
     const companyName = companyInfo?.company || offer.company || "Entreprise";
-    const offerData = [{
-      companyName: companyName,
-      offerName: offer.title,
-      applyUrl: offer.applyUrl || ""
-    }];
-    
+    const offerData = [
+      {
+        companyName: companyName,
+        offerName: offer.title,
+        applyUrl: offer.applyUrl || "",
+      },
+    ];
+
     let content, mimeType, extension;
-    
+
     switch (format) {
-      case 'txt':
-        content = `Nom de l'entreprise : ${offerData[0].companyName}\n` +
-                  `Nom de l'offre : ${offerData[0].offerName}\n` +
-                  `Url pour postuler : ${offerData[0].applyUrl}\n`;
-        mimeType = 'text/plain';
-        extension = 'txt';
+      case "txt":
+        content =
+          `Nom de l'entreprise : ${offerData[0].companyName}\n` +
+          `Nom de l'offre : ${offerData[0].offerName}\n` +
+          `Url pour postuler : ${offerData[0].applyUrl}\n`;
+        mimeType = "text/plain";
+        extension = "txt";
         break;
-      case 'json':
+      case "json":
         content = JSON.stringify(offerData, null, 2);
-        mimeType = 'application/json';
-        extension = 'json';
+        mimeType = "application/json";
+        extension = "json";
         break;
-      case 'csv':
-        const headers = ['companyName', 'offerName', 'applyUrl'];
-        const rows = offerData.map(data =>
-          `"${data.companyName.replace(/"/g, '""')}","${data.offerName.replace(/"/g, '""')}","${data.applyUrl.replace(/"/g, '""')}"`
+      case "csv":
+        const headers = ["companyName", "offerName", "applyUrl"];
+        const rows = offerData.map(
+          (data) =>
+            `"${data.companyName.replace(/"/g, '""')}","${data.offerName.replace(/"/g, '""')}","${data.applyUrl.replace(/"/g, '""')}"`,
         );
-        content = [headers.join(','), ...rows].join('\n');
-        mimeType = 'text/csv';
-        extension = 'csv';
+        content = [headers.join(","), ...rows].join("\n");
+        mimeType = "text/csv";
+        extension = "csv";
         break;
       default:
         return;
     }
-    
-    // Déclencher le téléchargement du fichier
+
     const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = `offre-${offerData[0].offerName.substring(0, 30).replace(/[^a-z0-9]/gi, '_')}.${extension}`;
+    link.download = `offre-${offerData[0].offerName.substring(0, 30).replace(/[^a-z0-9]/gi, "_")}.${extension}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

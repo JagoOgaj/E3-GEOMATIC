@@ -395,7 +395,6 @@ export class MapManager {
     path.forEach((step) => {
       const latlng = [step.lat, step.lon];
 
-      // Point de DÉPART
       if (step.type === "DEPART") {
         L.marker(latlng, {
           icon: L.divIcon({
