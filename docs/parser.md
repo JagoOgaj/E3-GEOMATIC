@@ -202,7 +202,7 @@ stop_id,stop_name,stop_lat,stop_lon,dataset_id,resource_id,dataset_custom_title,
 }
 ```
 
-2. **Entreprises avec transports (GeoJSON)**
+2. **Entreprises (GeoJSON)**
 ```json
 {
   "type": "FeatureCollection",
@@ -249,6 +249,100 @@ stop_id,stop_name,stop_lat,stop_lon,dataset_id,resource_id,dataset_custom_title,
     }
   ]
 }
+```
+
+4. **Transport stations (JSON)**
+```json
+ "1": {
+    "name": " Le Plessis LANDISACQ ",
+    "lat": 48.7449434887236,
+    "lon": -0.683349219308029,
+    "dataset_source_name": "Réseau scolaire de Flers",
+    "dataset_id": 1005,
+    "resource_id": 82094,
+    "dataset_datagouv_id": "65a7f8a1a8c1f93f2f87dea9",
+    "resource_datagouv_id": "e833d9ed-201b-4154-aa16-45bc00939571"
+  },
+```
+
+5. **Agrégats des transports à proximité des entreprises (JSON)**
+```json
+"35600000044184_46.4470_-0.8041": {
+    "radius": 2000,
+    "stations": [
+      {
+        "id": "85FONTmaroA",
+        "distance": 730,
+        "modes": [
+          "METRO"
+        ],
+        "lines": [
+          "16",
+          "17"
+        ]
+      },
+      {
+        "id": "ALEOP:Quay:85FONTmaroA",
+        "distance": 730,
+        "modes": [
+          "METRO"
+        ],
+        "lines": [
+          "17",
+          "16",
+          "2"
+        ]
+      },
+      {
+        "id": "85FONTmaro",
+        "distance": 735
+      },
+      {
+        "id": "ALEOP:StopPlace:85FONTmaro",
+        "distance": 735
+      },
+      {
+        "id": "85FONTmaroR",
+        "distance": 739
+      },
+      {
+        "id": "ALEOP:Quay:85FONTmaroR",
+        "distance": 739
+      },
+      {
+        "id": "85FONTmarc",
+        "distance": 1508,
+        "modes": [
+          "METRO"
+        ],
+        "lines": [
+          "15",
+          "16",
+          "17"
+        ]
+      },
+      {
+        "id": "85FONTmarcU",
+        "distance": 1508
+      },
+      {
+        "id": "ALEOP:StopPlace:85FONTmarc",
+        "distance": 1508,
+        "modes": [
+          "METRO"
+        ],
+        "lines": [
+          "17",
+          "16",
+          "15"
+        ]
+      },
+      {
+        "id": "ALEOP:Quay:85FONTmarcU",
+        "distance": 1508
+      }
+    ]
+  },
 ```
 
 ## Exemple complet d'exécution

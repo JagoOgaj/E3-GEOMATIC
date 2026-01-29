@@ -427,7 +427,6 @@
 }
 
 .styled-range {
-  -webkit-appearance: none;
   width: 100%;
   height: 6px;
   background: #e9ecef;
